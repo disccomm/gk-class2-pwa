@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GK Quiz – Class 2 (Shuffled)</title>
+<title>GK Quiz – Class 2 (Master Aligned)</title>
 <style>
 :root{
  --primary:#2563eb;--correct:#16a34a;--wrong:#dc2626;--bg:#f8fafc;
@@ -16,11 +16,12 @@ header{background:var(--primary);color:#fff;padding:16px;text-align:center;}
 button{background:var(--primary);color:#fff;border:none;border-radius:8px;
  padding:10px 16px;font-size:16px;margin:5px;cursor:pointer;}
 button.secondary{background:#64748b;}
+button:disabled{opacity:.5}
 .option{border:1px solid #cbd5e1;padding:12px;border-radius:8px;margin:10px 0;cursor:pointer;}
-.option.correct{background:#dcfce7;border-color:#16a34a;}
-.option.wrong{background:#fee2e2;border-color:#dc2626;}
+.option.correct{background:#dcfce7;border-color:var(--correct);}
+.option.wrong{background:#fee2e2;border-color:var(--wrong);}
 .progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0;}
-.progress-bar{height:100%;background:#2563eb;width:0%;}
+.progress-bar{height:100%;background:var(--primary);width:0%;transition:.3s;}
 .footer{text-align:center;color:#64748b;margin-top:30px;font-size:14px;}
 </style>
 <script src="questionBank.js"></script>
@@ -29,7 +30,7 @@ button.secondary{background:#64748b;}
 
 <header>
 <h1>GK Quiz – Class 2</h1>
-<p>Shuffled Answers – Fair Quiz</p>
+<p>Practice Quiz (Up to 200 Questions)</p>
 </header>
 
 <div class="container">
@@ -37,10 +38,7 @@ button.secondary{background:#64748b;}
 
 <div id="setup">
 <label><strong>Select number of questions:</strong></label><br><br>
-<select id="count">
-<option value="5">5</option>
-<option value="8">8</option>
-</select><br><br>
+<select id="count"></select><br><br>
 <button onclick="startQuiz()">Start Quiz</button>
 </div>
 
@@ -57,13 +55,19 @@ button.secondary{background:#64748b;}
 <div id="review" style="display:none;"></div>
 
 </div>
-<div class="footer">© Class 2 GK Quiz • Shuffled</div>
+<div class="footer">© Class 2 GK Quiz • Master Prompt Aligned</div>
 </div>
 
-<audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
-<audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/boing.ogg"></audio>
-
 <script>
+/* ---------- MASTER PROMPT COMPLIANCE ---------- */
+/* Dropdown: 10–200 */
+for(let n=10;n<=200;n+=10){
+ const o=document.createElement("option");
+ o.value=n;o.textContent=n;
+ count.appendChild(o);
+}
+
+/* Shuffle utility */
 function shuffle(arr){
  const a=[...arr];
  for(let i=a.length-1;i>0;i--){
@@ -73,11 +77,13 @@ function shuffle(arr){
  return a;
 }
 
-let quiz=[],i=0,answers={},wrongList=[];
+let quiz=[],i=0,answers={},locked={},wrongIdx=[];
 
 function startQuiz(){
- quiz=shuffle(QUESTION_BANK).slice(0,+count.value)
+ const total=+count.value;
+ quiz=shuffle(QUESTION_BANK).slice(0,total)
    .map(q=>({...q, shuffledOptions: shuffle(q.options)}));
+ i=0;answers={};locked={};wrongIdx=[];
  setup.style.display="none";
  quizDiv.style.display="block";
  render();
@@ -87,7 +93,7 @@ const quizDiv=document.getElementById("quiz");
 
 function render(){
  const q=quiz[i];
- qText.innerText=`Q${i+1}. ${q.question}`;
+ qText.innerText=`Q${i+1} of ${quiz.length}. ${q.question}`;
  bar.style.width=((i+1)/quiz.length*100)+"%";
  options.innerHTML="";
  q.shuffledOptions.forEach(opt=>{
@@ -97,23 +103,18 @@ function render(){
     if(opt===q.answer)d.classList.add("correct");
     else if(opt===answers[i])d.classList.add("wrong");
   }
-  d.onclick=()=>select(opt,d);
+  d.onclick=()=>select(opt);
   d.textContent=opt;
   options.appendChild(d);
  });
 }
 
-function select(opt,el){
- if(answers[i])return;
+function select(opt){
+ if(locked[i])return;
  answers[i]=opt;
- if(opt===quiz[i].answer){
-  el.classList.add("correct");
-  correctSound.play();
- }else{
-  el.classList.add("wrong");
-  wrongList.push(i);
-  wrongSound.play();
- }
+ locked[i]=true;
+ if(opt!==quiz[i].answer) wrongIdx.push(i);
+ render();
 }
 
 function next(){
@@ -125,27 +126,15 @@ function prev(){if(i>0){i--;render();}}
 function showReview(){
  quizDiv.style.display="none";
  review.style.display="block";
- let score=quiz.length-wrongList.length;
+ let score=quiz.length-wrongIdx.length;
  review.innerHTML=`<h2>Score: ${score} / ${quiz.length}</h2>`;
  quiz.forEach((q,idx)=>{
   review.innerHTML+=`
-  <p><strong>${q.question}</strong><br>
-  Your answer: ${answers[idx]||"Not answered"}<br>
-  Correct answer: <strong>${q.answer}</strong><br>
-  <em>PDF page ${q.page}</em></p><hr>`;
+   <p><strong>Q${idx+1}:</strong> ${q.question}<br>
+   Your answer: ${answers[idx]||"Not Answered"}<br>
+   Correct answer: <strong>${q.answer}</strong><br>
+   <em>Refer PDF page ${q.page}</em></p><hr>`;
  });
- if(wrongList.length){
-  review.innerHTML+=`<button onclick="retryWrong()">Retry Wrong Questions</button>`;
- }
-}
-
-function retryWrong(){
- quiz=wrongList.map(idx=>quiz[idx])
-   .map(q=>({...q, shuffledOptions: shuffle(q.options)}));
- i=0;answers={};wrongList=[];
- review.style.display="none";
- quizDiv.style.display="block";
- render();
 }
 </script>
 
