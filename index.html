@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GK Quiz – Class 2 (Fixed)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GK Quiz – Class 2 (Final)</title>
 <style>
 :root{
  --primary:#2563eb;--correct:#16a34a;--wrong:#dc2626;--bg:#f8fafc;
@@ -14,25 +14,21 @@ header{background:var(--primary);color:#fff;padding:16px;text-align:center;}
 .card{background:#fff;border-radius:12px;padding:24px;
  box-shadow:0 10px 25px rgba(0,0,0,.08);}
 button{background:var(--primary);color:#fff;border:none;border-radius:8px;
- padding:10px 16px;font-size:16px;cursor:pointer;}
-button.secondary{background:#64748b;}
-button:disabled{opacity:.5}
-.option{border:1px solid #cbd5e1;padding:12px;border-radius:8px;
- margin:10px 0;cursor:pointer;}
+ padding:10px 16px;font-size:16px;margin:5px;cursor:pointer;}
+.option{border:1px solid #cbd5e1;padding:12px;border-radius:8px;margin:10px 0;cursor:pointer;}
 .option.correct{background:#dcfce7;border-color:var(--correct);}
 .option.wrong{background:#fee2e2;border-color:var(--wrong);}
-.option.selected{outline:2px solid var(--primary);}
 .progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0;}
-.progress-bar{height:100%;background:var(--primary);width:0%;transition:.3s;}
+.progress-bar{height:100%;background:var(--primary);width:0%;}
 .footer{text-align:center;color:#64748b;margin-top:30px;font-size:14px;}
 </style>
 <script src="questionBank.js"></script>
 </head>
-
 <body>
+
 <header>
 <h1>GK Quiz – Class 2</h1>
-<p>Practice Quiz (Reviewed & Fixed)</p>
+<p>Final Reviewed Version</p>
 </header>
 
 <div class="container">
@@ -40,7 +36,10 @@ button:disabled{opacity:.5}
 
 <div id="setup">
 <label><strong>Select number of questions:</strong></label><br><br>
-<select id="count"></select><br><br>
+<select id="count">
+<option value="5">5</option>
+<option value="8">8</option>
+</select><br><br>
 <button onclick="startQuiz()">Start Quiz</button>
 </div>
 
@@ -48,25 +47,20 @@ button:disabled{opacity:.5}
 <div class="progress"><div id="bar" class="progress-bar"></div></div>
 <h2 id="qText"></h2>
 <div id="options"></div>
-<div style="margin-top:20px">
-<button class="secondary" onclick="prev()">Previous</button>
 <button onclick="next()">Next</button>
-</div>
 </div>
 
 <div id="review" style="display:none;"></div>
+
 </div>
-<div class="footer">© Class 2 GK Quiz • Remediated Version</div>
+<div class="footer">© Class 2 GK Quiz • Final</div>
 </div>
+
+<audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/boing.ogg"></audio>
 
 <script>
-for(let i=10;i<=200;i+=10){
- const o=document.createElement("option");
- o.value=i;o.textContent=i;
- count.appendChild(o);
-}
-
-let quiz=[],i=0,answers={},locked={};
+let quiz=[],i=0,answers={},wrongList=[];
 
 function startQuiz(){
  quiz=[...QUESTION_BANK].slice(0,+count.value);
@@ -85,42 +79,55 @@ function render(){
  q.options.forEach(opt=>{
   const d=document.createElement("div");
   d.className="option";
-  if(answers[i]){
-    if(opt===q.answer)d.classList.add("correct");
-    else if(opt===answers[i])d.classList.add("wrong");
-  }
-  d.onclick=()=>select(opt);
+  d.onclick=()=>select(opt,d);
   d.textContent=opt;
   options.appendChild(d);
  });
 }
 
-function select(opt){
- if(locked[i])return;
+function select(opt,el){
+ if(answers[i]) return;
  answers[i]=opt;
- locked[i]=true;
- render();
+ if(opt===quiz[i].answer){
+  el.classList.add("correct");
+  correctSound.play();
+ }else{
+  el.classList.add("wrong");
+  wrongList.push(i);
+  wrongSound.play();
+ }
 }
 
 function next(){
  if(i<quiz.length-1){i++;render();}
  else showReview();
 }
-function prev(){if(i>0){i--;render();}}
 
 function showReview(){
  quizDiv.style.display="none";
  review.style.display="block";
- review.innerHTML="<h2>Revision Summary</h2>";
+ let score=quiz.length-wrongList.length;
+ review.innerHTML=`<h2>Score: ${score} / ${quiz.length}</h2>`;
  quiz.forEach((q,idx)=>{
-  const user=answers[idx]||"Not Answered";
   review.innerHTML+=`
-   <p><strong>Q${idx+1}:</strong> ${q.question}<br>
-   Your answer: ${user}<br>
-   Correct answer: <strong>${q.answer}</strong><br>
-   <em>Refer PDF page ${q.page}</em></p><hr>`;
+  <p><strong>${q.question}</strong><br>
+  Your answer: ${answers[idx]||"Not answered"}<br>
+  Correct answer: ${q.answer}<br>
+  <em>PDF page ${q.page}</em></p><hr>`;
  });
+ if(wrongList.length){
+  review.innerHTML+=`<button onclick="retryWrong()">Retry Wrong Questions</button>`;
+ }
+}
+
+function retryWrong(){
+ quiz=wrongList.map(i=>quiz[i]);
+ i=0;answers={};wrongList=[];
+ review.style.display="none";
+ quizDiv.style.display="block";
+ render();
 }
 </script>
+
 </body>
 </html>
