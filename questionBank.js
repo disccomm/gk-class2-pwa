@@ -1,67 +1,52 @@
-window.QUESTION_BANK = [
+/* Batch 1 – GK Class 2 (Demo Set) */
+
+const QUESTION_BANK = [
+{
+  id: 1,
+  question: "Which planet do we live on?",
+  options: ["Earth", "Mars", "Venus", "Jupiter"],
+  answer: "Earth",
+  image: "https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg",
+  source: "PDF Page 5"
+  },
   {
+    id: 2,
     question: "Which animal is shown?",
-    image: "https://upload.wikimedia.org/wikipedia/commons/2/26/YellowLabradorLooking_new.jpg",
     options: ["Dog", "Cat", "Cow", "Horse"],
-    answer: "Dog"
+    answer: "Dog",
+    image: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Golde33443.jpg",
+    source: "PDF Page 8"
   },
   {
-    question: "Which bird is the National Bird of India?",
-    image: "https://upload.wikimedia.org/wikipedia/commons/3/32/Indian_peacock.jpg",
-    options: ["Crow", "Peacock", "Parrot", "Sparrow"],
-    answer: "Peacock"
-  },
-  {
-    question: "Which fruit is shown?",
-    image: "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg",
-    options: ["Apple", "Orange", "Banana", "Mango"],
-    answer: "Apple"
-  },
-  {
+    id: 3,
     question: "Which vegetable is shown?",
-    image: "https://upload.wikimedia.org/wikipedia/commons/4/44/Brinjal.jpg",
-    options: ["Radish", "Brinjal", "Carrot", "Turnip"],
-    answer: "Brinjal"
+    options: ["Brinjal", "Carrot", "Radish", "Turnip"],
+    answer: "Brinjal",
+    image: "https://upload.wikimedia.org/wikipedia/commons/4/44/Aubergine.jpg",
+    source: "PDF Page 10"
   },
   {
+    id: 4,
+    question: "Which bird is the National Bird of India?",
+    options: ["Peacock", "Sparrow", "Crow", "Parrot"],
+    answer: "Peacock",
+    image: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Peacock_Plumage.jpg",
+    source: "PDF Page 14"
+  },
+  {
+    id: 5,
     question: "Which of these is a fruit?",
-    options: ["Potato", "Onion", "Apple", "Carrot"],
-    answer: "Apple"
+    options: ["Apple", "Onion", "Potato", "Carrot"],
+    answer: "Apple",
+    image: "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg",
+    source: "PDF Page 6"
   },
   {
-    question: "Which animal is called the Ship of the Desert?",
-    options: ["Horse", "Camel", "Donkey", "Elephant"],
-    answer: "Camel"
-  },
-  {
-    question: "Which body part helps us to see?",
-    options: ["Ears", "Nose", "Eyes", "Hands"],
-    answer: "Eyes"
-  },
-  {
-    question: "What is the National Flower of India?",
-    image: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Nelumbo_nucifera_open_flower.jpg",
-    options: ["Rose", "Sunflower", "Lotus", "Jasmine"],
-    answer: "Lotus"
-  },
-  {
-    question: "Which of these animals gives us milk?",
-    options: ["Dog", "Cow", "Cat", "Lion"],
-    answer: "Cow"
-  },
-  {
-    question: "Which planet do we live on?",
-    options: ["Mars", "Earth", "Jupiter", "Venus"],
-    answer: "Earth"
-  },
-  {
-    question: "Which shape has 3 sides?",
-    options: ["Square", "Circle", "Triangle", "Rectangle"],
-    answer: "Triangle"
-  },
-  {
-    question: "Which of these is used to write?",
-    options: ["Eraser", "Pen", "Book", "Bag"],
-    answer: "Pen"
+    id: 6,
+    question: "Which flower is the National Flower of India?",
+    options: ["Lotus", "Rose", "Sunflower", "Jasmine"],
+    answer: "Lotus",
+    image: "https://upload.wikimedia.org/wikipedia/commons/4/4f/Lotus_flower.jpg",
+    source: "PDF Page 12"
   }
 ];
