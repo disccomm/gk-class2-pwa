@@ -31,10 +31,7 @@ header { background:#2563eb; color:#fff; padding:14px; text-align:center; }
   font-size:18px;
 }
 
-.nav {
-  display:flex;
-  gap:10px;
-}
+.nav { display:flex; gap:10px; }
 button {
   flex:1;
   padding:14px;
@@ -82,13 +79,13 @@ img {
   <label><input type="radio" name="count" value="5"> 5</label>
   <label><input type="radio" name="count" value="10" checked> 10</label>
   <br><br>
-  <button class="primary" onclick="startQuiz()">Start Quiz</button>
+  <button class="primary" id="startBtn">Start Quiz</button>
 </div>
 
 <div class="card" id="quiz" style="display:none;">
   <div style="display:flex; justify-content:space-between;">
     <span id="qnum"></span>
-    <span onclick="confirmExit()">Exit ✖</span>
+    <span id="exitBtn">Exit ✖</span>
   </div>
 
   <div class="progress"><div class="bar" id="bar"></div></div>
@@ -98,13 +95,13 @@ img {
   <div id="options"></div>
 
   <div class="actions-row">
-    <span id="clearBtn" onclick="clearAnswer()">🧽 Clear</span>
-    <span onclick="skip()">⏭ Skip</span>
+    <span id="clearBtn">🧽 Clear</span>
+    <span id="skipBtn">⏭ Skip</span>
   </div>
 
   <div class="nav">
-    <button class="secondary" onclick="prev()">← Previous</button>
-    <button id="nextBtn" class="primary disabled" onclick="next()">Next →</button>
+    <button class="secondary" id="prevBtn">← Previous</button>
+    <button class="primary disabled" id="nextBtn">Next →</button>
   </div>
 </div>
 
@@ -115,117 +112,158 @@ img {
 <div class="modal" id="exitModal">
   <div class="box">
     <p><b>Exit Quiz?</b><br>Your progress will be saved.</p>
-    <button class="secondary" onclick="closeExit()">Cancel</button>
-    <button class="primary" onclick="exitQuiz()">Exit Quiz</button>
+    <button class="secondary" id="cancelExit">Cancel</button>
+    <button class="primary" id="confirmExit">Exit Quiz</button>
   </div>
 </div>
 
 <script src="questionBank.demo.js"></script>
+
 <script>
+document.addEventListener("DOMContentLoaded", () => {
 
-// DOM bindings (FIX for Start Quiz)
-const setup = document.getElementById("setup");
-const quizDiv = document.getElementById("quiz");
-const summary = document.getElementById("summary");
+  // DOM
+  const setup = document.getElementById("setup");
+  const quizDiv = document.getElementById("quiz");
+  const summary = document.getElementById("summary");
 
-const qnum = document.getElementById("qnum");
-const bar = document.getElementById("bar");
-const question = document.getElementById("question");
-const image = document.getElementById("image");
-const options = document.getElementById("options");
+  const startBtn = document.getElementById("startBtn");
+  const qnum = document.getElementById("qnum");
+  const bar = document.getElementById("bar");
+  const question = document.getElementById("question");
+  const image = document.getElementById("image");
+  const options = document.getElementById("options");
 
-const clearBtn = document.getElementById("clearBtn");
-const nextBtn = document.getElementById("nextBtn");
-const exitModal = document.getElementById("exitModal");
+  const clearBtn = document.getElementById("clearBtn");
+  const skipBtn = document.getElementById("skipBtn");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
 
-let quiz=[], idx=0, answers={}, locked={};
+  const exitBtn = document.getElementById("exitBtn");
+  const exitModal = document.getElementById("exitModal");
+  const cancelExit = document.getElementById("cancelExit");
+  const confirmExit = document.getElementById("confirmExit");
 
-function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
+  // State
+  let quiz = [];
+  let idx = 0;
+  let answers = {};
+  let locked = {};
 
-function startQuiz(){
-  const n = document.querySelector('input[name="count"]:checked').value;
-  quiz = shuffle(QUESTION_BANK).slice(0,n).map(q=>({...q, opts:shuffle(q.options)}));
-  setup.style.display="none";
-  quizDiv.style.display="block";
-  render();
-}
-
-const quizDiv = document.getElementById("quiz");
-
-function render(){
-  const q = quiz[idx];
-
-  if(q.question.toLowerCase().includes("sample")){
-    throw new Error("Sample question detected");
+  function shuffle(arr) {
+    return [...arr].sort(() => Math.random() - 0.5);
   }
 
-  qnum.innerText = `Question ${idx+1} of ${quiz.length}`;
-  bar.style.width = ((idx+1)/quiz.length*100)+"%";
-  question.innerText = q.question;
+  function startQuiz() {
+    const count = document.querySelector('input[name="count"]:checked').value;
 
-  image.innerHTML = "";
-  if(q.type==="image" && q.imageUrl){
-    image.innerHTML = `<img src="${q.imageUrl}" referrerpolicy="no-referrer">`;
+    quiz = shuffle(QUESTION_BANK)
+      .slice(0, count)
+      .map(q => ({ ...q, opts: shuffle(q.options) }));
+
+    idx = 0;
+    answers = {};
+    locked = {};
+
+    setup.style.display = "none";
+    quizDiv.style.display = "block";
+    render();
   }
 
-  options.innerHTML="";
-  q.opts.forEach((o,i)=>{
-    const d=document.createElement("div");
-    d.className="option";
-    d.innerText=String.fromCharCode(65+i)+". "+o;
+  function render() {
+    const q = quiz[idx];
 
-    if(locked[idx]){
-      if(o===q.answer) d.classList.add("correct");
-      else if(o===answers[idx]) d.classList.add("wrong");
+    qnum.textContent = `Question ${idx + 1} of ${quiz.length}`;
+    bar.style.width = ((idx + 1) / quiz.length * 100) + "%";
+    question.textContent = q.question;
+
+    image.innerHTML = "";
+    if (q.type === "image" && q.imageUrl) {
+      const img = document.createElement("img");
+      img.src = q.imageUrl;
+      img.referrerPolicy = "no-referrer";
+      img.onerror = () => img.style.display = "none";
+      image.appendChild(img);
     }
 
-    d.onclick=()=>{
-      if(locked[idx]) return;
-      answers[idx]=o;
-      locked[idx]=true;
-      clearBtn.classList.add("disabled");
+    options.innerHTML = "";
+    q.opts.forEach((opt, i) => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = String.fromCharCode(65 + i) + ". " + opt;
+
+      if (locked[idx]) {
+        if (opt === q.answer) div.classList.add("correct");
+        else if (opt === answers[idx]) div.classList.add("wrong");
+      }
+
+      div.onclick = () => {
+        if (locked[idx]) return;
+        answers[idx] = opt;
+        locked[idx] = true;
+        clearBtn.classList.add("disabled");
+        render();
+      };
+
+      options.appendChild(div);
+    });
+
+    nextBtn.classList.toggle("disabled", !locked[idx]);
+    clearBtn.classList.toggle("disabled", locked[idx]);
+  }
+
+  function next() {
+    if (idx < quiz.length - 1) {
+      idx++;
       render();
-    };
+    } else {
+      showSummary();
+    }
+  }
 
-    options.appendChild(d);
-  });
+  function prev() {
+    if (idx > 0) {
+      idx--;
+      render();
+    }
+  }
 
-  nextBtn.classList.toggle("disabled", !locked[idx]);
-  clearBtn.classList.toggle("disabled", locked[idx]);
-}
+  function clearAnswer() {
+    if (locked[idx]) return;
+    delete answers[idx];
+    render();
+  }
 
-function clearAnswer(){
-  if(locked[idx]) return;
-  delete answers[idx];
-  render();
-}
+  function showSummary() {
+    quizDiv.style.display = "none";
+    summary.style.display = "block";
 
-function skip(){ next(); }
+    let correct = 0;
+    quiz.forEach((q, i) => {
+      if (answers[i] === q.answer) correct++;
+    });
 
-function next(){
-  if(idx<quiz.length-1){ idx++; render(); }
-  else showSummary();
-}
+    summary.innerHTML = `
+      <h3>Quiz Summary</h3>
+      <p>Score: ${correct} / ${quiz.length}</p>
+    `;
+  }
 
-function prev(){ if(idx>0){ idx--; render(); } }
+  // Events
+  startBtn.onclick = startQuiz;
+  nextBtn.onclick = next;
+  prevBtn.onclick = prev;
+  clearBtn.onclick = clearAnswer;
+  skipBtn.onclick = next;
 
-function confirmExit(){ exitModal.style.display="flex"; }
-function closeExit(){ exitModal.style.display="none"; }
-function exitQuiz(){ exitModal.style.display="none"; showSummary(); }
+  exitBtn.onclick = () => exitModal.style.display = "flex";
+  cancelExit.onclick = () => exitModal.style.display = "none";
+  confirmExit.onclick = () => {
+    exitModal.style.display = "none";
+    showSummary();
+  };
 
-function showSummary(){
-  quizDiv.style.display="none";
-  summary.style.display="block";
-
-  let correct=0, wrong=0;
-  quiz.forEach((q,i)=>{
-    if(answers[i]===q.answer) correct++;
-    else if(answers[i]) wrong++;
-  });
-
-  summary.innerHTML=`<h3>Quiz Summary</h3>
-  <p>Score: ${correct} / ${quiz.length}</p>`;
-}
+});
 </script>
 
 </body>
