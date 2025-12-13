@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GK Quiz – Class 2</title>
-<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GK Quiz – Class 2 (Fixed)</title>
 <style>
 :root{
  --primary:#2563eb;--correct:#16a34a;--wrong:#dc2626;--bg:#f8fafc;
 }
-body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);}
+body{margin:0;font-family:-apple-system,Segoe UI,Arial;background:var(--bg);}
 header{background:var(--primary);color:#fff;padding:16px;text-align:center;}
 .container{max-width:900px;margin:auto;padding:20px;}
 .card{background:#fff;border-radius:12px;padding:24px;
  box-shadow:0 10px 25px rgba(0,0,0,.08);}
-.controls{display:flex;justify-content:space-between;margin-top:20px;}
 button{background:var(--primary);color:#fff;border:none;border-radius:8px;
  padding:10px 16px;font-size:16px;cursor:pointer;}
 button.secondary{background:#64748b;}
+button:disabled{opacity:.5}
 .option{border:1px solid #cbd5e1;padding:12px;border-radius:8px;
  margin:10px 0;cursor:pointer;}
-.option.selected{background:#dbeafe;border-color:#2563eb;}
 .option.correct{background:#dcfce7;border-color:var(--correct);}
 .option.wrong{background:#fee2e2;border-color:var(--wrong);}
-img.thumb{max-width:220px;display:block;margin:12px 0;}
+.option.selected{outline:2px solid var(--primary);}
+.progress{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0;}
+.progress-bar{height:100%;background:var(--primary);width:0%;transition:.3s;}
 .footer{text-align:center;color:#64748b;margin-top:30px;font-size:14px;}
 </style>
 <script src="questionBank.js"></script>
@@ -32,7 +32,7 @@ img.thumb{max-width:220px;display:block;margin:12px 0;}
 <body>
 <header>
 <h1>GK Quiz – Class 2</h1>
-<p>Practice Quiz (Up to 200 Questions)</p>
+<p>Practice Quiz (Reviewed & Fixed)</p>
 </header>
 
 <div class="container">
@@ -40,96 +40,87 @@ img.thumb{max-width:220px;display:block;margin:12px 0;}
 
 <div id="setup">
 <label><strong>Select number of questions:</strong></label><br><br>
-<select id="questionCount"></select><br><br>
-<button id="startBtn">Start Quiz</button>
+<select id="count"></select><br><br>
+<button onclick="startQuiz()">Start Quiz</button>
 </div>
 
 <div id="quiz" style="display:none;">
-<h2 id="questionText"></h2>
-<img id="questionImage" class="thumb" style="display:none;">
+<div class="progress"><div id="bar" class="progress-bar"></div></div>
+<h2 id="qText"></h2>
 <div id="options"></div>
-
-<div class="controls">
-<button class="secondary" id="prevBtn">Previous</button>
-<button class="secondary" id="skipBtn">Skip</button>
-<button id="nextBtn">Next</button>
+<div style="margin-top:20px">
+<button class="secondary" onclick="prev()">Previous</button>
+<button onclick="next()">Next</button>
 </div>
 </div>
 
 <div id="review" style="display:none;"></div>
 </div>
-
-<div class="footer">© Class 2 GK Quiz • Tested Version</div>
+<div class="footer">© Class 2 GK Quiz • Remediated Version</div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
-
-const select=document.getElementById("questionCount");
 for(let i=10;i<=200;i+=10){
- const opt=document.createElement("option");
- opt.value=i; opt.textContent=i;
- select.appendChild(opt);
+ const o=document.createElement("option");
+ o.value=i;o.textContent=i;
+ count.appendChild(o);
 }
 
-let quiz=[],index=0,answers={};
-
-document.getElementById("startBtn").onclick=startQuiz;
-document.getElementById("nextBtn").onclick=nextQuestion;
-document.getElementById("prevBtn").onclick=prevQuestion;
-document.getElementById("skipBtn").onclick=skipQuestion;
+let quiz=[],i=0,answers={},locked={};
 
 function startQuiz(){
- quiz=[...QUESTION_BANK].sort(()=>0.5-Math.random())
- .slice(0,Number(select.value));
- index=0;answers={};
- document.getElementById("setup").style.display="none";
- document.getElementById("quiz").style.display="block";
+ quiz=[...QUESTION_BANK].slice(0,+count.value);
+ setup.style.display="none";
+ quizDiv.style.display="block";
  render();
 }
 
-function render(){
- const q=quiz[index];
- document.getElementById("questionText").innerText=`Q${index+1}. ${q.question}`;
- const img=document.getElementById("questionImage");
- if(q.image){img.src=q.image;img.style.display="block";}
- else img.style.display="none";
+const quizDiv=document.getElementById("quiz");
 
- const optDiv=document.getElementById("options");
- optDiv.innerHTML="";
+function render(){
+ const q=quiz[i];
+ qText.innerText=`Q${i+1}. ${q.question}`;
+ bar.style.width=((i+1)/quiz.length*100)+"%";
+ options.innerHTML="";
  q.options.forEach(opt=>{
   const d=document.createElement("div");
   d.className="option";
-  if(answers[index]===opt)d.classList.add("selected");
-  d.onclick=()=>{answers[index]=opt;render();};
+  if(answers[i]){
+    if(opt===q.answer)d.classList.add("correct");
+    else if(opt===answers[i])d.classList.add("wrong");
+  }
+  d.onclick=()=>select(opt);
   d.textContent=opt;
-  optDiv.appendChild(d);
+  options.appendChild(d);
  });
 }
 
-function nextQuestion(){
- if(index<quiz.length-1){index++;render();}
+function select(opt){
+ if(locked[i])return;
+ answers[i]=opt;
+ locked[i]=true;
+ render();
+}
+
+function next(){
+ if(i<quiz.length-1){i++;render();}
  else showReview();
 }
-function prevQuestion(){if(index>0){index--;render();}}
-function skipQuestion(){nextQuestion();}
+function prev(){if(i>0){i--;render();}}
 
 function showReview(){
- document.getElementById("quiz").style.display="none";
- const review=document.getElementById("review");
+ quizDiv.style.display="none";
  review.style.display="block";
- review.innerHTML="<h2>Review</h2>";
- quiz.forEach((q,i)=>{
-  const user=answers[i]||"Not Answered";
+ review.innerHTML="<h2>Revision Summary</h2>";
+ quiz.forEach((q,idx)=>{
+  const user=answers[idx]||"Not Answered";
   review.innerHTML+=`
-  <p><strong>Q${i+1}:</strong> ${q.question}<br>
-  Your answer: ${user}<br>
-  Correct answer: ${q.answer}<br>
-  <em>Page ${q.page}</em></p><hr>`;
+   <p><strong>Q${idx+1}:</strong> ${q.question}<br>
+   Your answer: ${user}<br>
+   Correct answer: <strong>${q.answer}</strong><br>
+   <em>Refer PDF page ${q.page}</em></p><hr>`;
  });
 }
-
-});
 </script>
 </body>
 </html>
