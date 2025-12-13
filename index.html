@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GK Quiz – Class 2</title>
+<title>GK Quiz – Engine Validation</title>
 
 <style>
 body { font-family: system-ui, -apple-system; background:#f4f6f8; margin:0; }
@@ -18,6 +18,8 @@ header { background:#2563eb; color:#fff; padding:14px; text-align:center; }
   border:1px solid #d1d5db; border-radius:10px;
   padding:14px; margin:8px 0; font-size:16px;
 }
+.option.correct { background:#dcfce7; border-color:#16a34a; }
+.option.wrong { background:#fee2e2; border-color:#dc2626; }
 .option.selected { background:#dbeafe; border-color:#2563eb; }
 
 .actions-row {
@@ -53,7 +55,7 @@ img { max-width:100%; border-radius:10px; margin:10px 0; }
 <body>
 
 <header>
-  <h2>GK Quiz – Class 2</h2>
+  <h2>GK Quiz – Engine Validation</h2>
 </header>
 
 <div class="container">
@@ -62,8 +64,6 @@ img { max-width:100%; border-radius:10px; margin:10px 0; }
   <p><b>How many questions?</b></p>
   <label><input type="radio" name="count" value="5"> 5</label>
   <label><input type="radio" name="count" value="10" checked> 10</label>
-  <label><input type="radio" name="count" value="20"> 20</label>
-  <label><input type="radio" name="count" value="50"> 50</label>
   <br><br>
   <button class="primary" onclick="startQuiz()">Start Quiz</button>
 </div>
@@ -111,8 +111,11 @@ function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
 
 function startQuiz(){
   const n = document.querySelector('input[name="count"]:checked').value;
-  quiz = shuffle(QUESTION_BANK).slice(0,n).map(q=>({...q, opts:shuffle(q.options)}));
-  setup.style.display="none"; quizDiv.style.display="block";
+  quiz = shuffle(QUESTION_BANK)
+          .slice(0,n)
+          .map(q=>({...q, opts:shuffle(q.options)}));
+  setup.style.display="none";
+  quizDiv.style.display="block";
   render();
 }
 
@@ -125,26 +128,34 @@ function render(){
   question.innerText = q.question;
 
   image.innerHTML = "";
-  if(q.type==="image") image.innerHTML=`<img src="${q.imageUrl}">`;
+  if(q.type==="image" && q.imageUrl){
+    image.innerHTML = `<img src="${q.imageUrl}" alt="question image">`;
+  }
 
   options.innerHTML="";
   q.opts.forEach((o,i)=>{
     const d=document.createElement("div");
-    d.className="option"+(answers[idx]===o?" selected":"");
+    d.className="option";
     d.innerText=String.fromCharCode(65+i)+". "+o;
-    d.onclick=()=>select(o);
+
+    if(answers[idx]){
+      if(o===q.answer) d.classList.add("correct");
+      else if(o===answers[idx]) d.classList.add("wrong");
+    }
+
+    d.onclick=()=>{
+      if(answers[idx]) return;
+      answers[idx]=o;
+      delete skipped[idx];
+      render();
+    };
     options.appendChild(d);
   });
 
   nextBtn.classList.toggle("disabled", !answers[idx]);
 }
 
-function select(o){
-  answers[idx]=o; delete skipped[idx]; render();
-}
-
 function clearAnswer(){ delete answers[idx]; render(); }
-
 function skip(){ skipped[idx]=true; next(); }
 
 function next(){
@@ -156,7 +167,6 @@ function prev(){ if(idx>0){ idx--; render(); } }
 
 function confirmExit(){ exitModal.style.display="flex"; }
 function closeExit(){ exitModal.style.display="none"; }
-
 function exitQuiz(){ exitModal.style.display="none"; showSummary(); }
 
 function showSummary(){
