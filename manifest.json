@@ -1,0 +1,7 @@
+{
+ "name":"GK Quiz Class 2",
+ "short_name":"GK Quiz",
+ "start_url":"index.html",
+ "display":"standalone",
+ "background_color":"#ffffff"
+}

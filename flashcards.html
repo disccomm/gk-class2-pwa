@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GK Flashcards</title>
+<script src="questionBank.js"></script>
+<style>
+.card{margin:auto;max-width:500px;background:#fff;padding:30px;}
+</style>
+</head>
+<body>
+
+<div class="card" onclick="flip()">
+  <h2 id="text"></h2>
+  <p id="extra"></p>
+</div>
+<button onclick="next()">Next</button>
+
+<script>
+let i=0,front=true;
+function flip(){
+  front=!front;
+  render();
+}
+function render(){
+  const q=QUESTION_BANK[i];
+  if(front){
+    text.innerText=q.question;
+    extra.innerText="";
+  }else{
+    text.innerText=q.answer;
+    extra.innerText="Page: "+q.page;
+  }
+}
+function next(){i=(i+1)%QUESTION_BANK.length;front=true;render();}
+render();
+</script>
+
+</body>
+</html>
