@@ -122,6 +122,22 @@ img {
 
 <script src="questionBank.demo.js"></script>
 <script>
+
+// DOM bindings (FIX for Start Quiz)
+const setup = document.getElementById("setup");
+const quizDiv = document.getElementById("quiz");
+const summary = document.getElementById("summary");
+
+const qnum = document.getElementById("qnum");
+const bar = document.getElementById("bar");
+const question = document.getElementById("question");
+const image = document.getElementById("image");
+const options = document.getElementById("options");
+
+const clearBtn = document.getElementById("clearBtn");
+const nextBtn = document.getElementById("nextBtn");
+const exitModal = document.getElementById("exitModal");
+
 let quiz=[], idx=0, answers={}, locked={};
 
 function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
