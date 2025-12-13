@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GK Quiz – Engine Validation</title>
 
 <style>
@@ -12,43 +12,60 @@ header { background:#2563eb; color:#fff; padding:14px; text-align:center; }
 .card { background:#fff; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
 
 .progress { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:8px 0; }
-.bar { height:100%; width:0%; background:#2563eb; }
+.bar { height:100%; background:#2563eb; width:0%; }
 
 .option {
-  border:1px solid #d1d5db; border-radius:10px;
-  padding:14px; margin:8px 0; font-size:16px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  padding:14px;
+  margin:8px 0;
+  font-size:16px;
 }
 .option.correct { background:#dcfce7; border-color:#16a34a; }
 .option.wrong { background:#fee2e2; border-color:#dc2626; }
-.option.selected { background:#dbeafe; border-color:#2563eb; }
 
 .actions-row {
-  display:flex; justify-content:space-between; margin:12px 0;
+  display:flex;
+  justify-content:space-between;
+  margin:12px 0;
+  font-size:18px;
 }
-.actions-row span { font-size:18px; cursor:pointer; }
 
 .nav {
-  display:flex; justify-content:space-between; gap:10px;
+  display:flex;
+  gap:10px;
 }
 button {
-  flex:1; padding:14px; border:none; border-radius:10px;
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:10px;
   font-size:16px;
 }
 .primary { background:#2563eb; color:white; }
 .secondary { background:#9ca3af; color:white; }
 .disabled { opacity:.4; pointer-events:none; }
 
-img { max-width:100%; border-radius:10px; margin:10px 0; }
+img {
+  max-width:100%;
+  border-radius:10px;
+  margin:10px 0;
+}
 
 .modal {
-  position:fixed; inset:0; background:rgba(0,0,0,.4);
-  display:none; align-items:center; justify-content:center;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
 .modal .box {
-  background:#fff; padding:20px; border-radius:12px; width:80%;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  width:80%;
 }
-
-.review-card { margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #e5e7eb; }
 </style>
 </head>
 
@@ -81,7 +98,7 @@ img { max-width:100%; border-radius:10px; margin:10px 0; }
   <div id="options"></div>
 
   <div class="actions-row">
-    <span onclick="clearAnswer()">🧽 Clear</span>
+    <span id="clearBtn" onclick="clearAnswer()">🧽 Clear</span>
     <span onclick="skip()">⏭ Skip</span>
   </div>
 
@@ -103,17 +120,15 @@ img { max-width:100%; border-radius:10px; margin:10px 0; }
   </div>
 </div>
 
-<script src="questionBank.js"></script>
+<script src="questionBank.demo.js"></script>
 <script>
-let quiz=[], idx=0, answers={}, skipped={};
+let quiz=[], idx=0, answers={}, locked={};
 
 function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
 
 function startQuiz(){
   const n = document.querySelector('input[name="count"]:checked').value;
-  quiz = shuffle(QUESTION_BANK)
-          .slice(0,n)
-          .map(q=>({...q, opts:shuffle(q.options)}));
+  quiz = shuffle(QUESTION_BANK).slice(0,n).map(q=>({...q, opts:shuffle(q.options)}));
   setup.style.display="none";
   quizDiv.style.display="block";
   render();
@@ -123,13 +138,18 @@ const quizDiv = document.getElementById("quiz");
 
 function render(){
   const q = quiz[idx];
+
+  if(q.question.toLowerCase().includes("sample")){
+    throw new Error("Sample question detected");
+  }
+
   qnum.innerText = `Question ${idx+1} of ${quiz.length}`;
   bar.style.width = ((idx+1)/quiz.length*100)+"%";
   question.innerText = q.question;
 
   image.innerHTML = "";
   if(q.type==="image" && q.imageUrl){
-    image.innerHTML = `<img src="${q.imageUrl}" alt="question image">`;
+    image.innerHTML = `<img src="${q.imageUrl}" referrerpolicy="no-referrer">`;
   }
 
   options.innerHTML="";
@@ -138,25 +158,33 @@ function render(){
     d.className="option";
     d.innerText=String.fromCharCode(65+i)+". "+o;
 
-    if(answers[idx]){
+    if(locked[idx]){
       if(o===q.answer) d.classList.add("correct");
       else if(o===answers[idx]) d.classList.add("wrong");
     }
 
     d.onclick=()=>{
-      if(answers[idx]) return;
+      if(locked[idx]) return;
       answers[idx]=o;
-      delete skipped[idx];
+      locked[idx]=true;
+      clearBtn.classList.add("disabled");
       render();
     };
+
     options.appendChild(d);
   });
 
-  nextBtn.classList.toggle("disabled", !answers[idx]);
+  nextBtn.classList.toggle("disabled", !locked[idx]);
+  clearBtn.classList.toggle("disabled", locked[idx]);
 }
 
-function clearAnswer(){ delete answers[idx]; render(); }
-function skip(){ skipped[idx]=true; next(); }
+function clearAnswer(){
+  if(locked[idx]) return;
+  delete answers[idx];
+  render();
+}
+
+function skip(){ next(); }
 
 function next(){
   if(idx<quiz.length-1){ idx++; render(); }
@@ -173,29 +201,14 @@ function showSummary(){
   quizDiv.style.display="none";
   summary.style.display="block";
 
-  let correct=0, wrong=0, skipCount=0;
+  let correct=0, wrong=0;
   quiz.forEach((q,i)=>{
-    if(skipped[i]) skipCount++;
-    else if(answers[i]===q.answer) correct++;
+    if(answers[i]===q.answer) correct++;
     else if(answers[i]) wrong++;
   });
 
-  summary.innerHTML=`
-    <h3>Quiz Summary</h3>
-    <p>Score: ${correct} / ${quiz.length}</p>
-    <p>✔ Correct: ${correct} | ✘ Wrong: ${wrong} | ⏭ Skipped: ${skipCount}</p>
-    <hr>
-  `;
-
-  quiz.forEach((q,i)=>{
-    summary.innerHTML+=`
-      <div class="review-card">
-        <b>Q${i+1}. ${q.question}</b><br>
-        Your answer: ${answers[i]||"Not Answered"}<br>
-        Correct answer: <b>${q.answer}</b><br>
-        📘 Page ${q.page}
-      </div>`;
-  });
+  summary.innerHTML=`<h3>Quiz Summary</h3>
+  <p>Score: ${correct} / ${quiz.length}</p>`;
 }
 </script>
 

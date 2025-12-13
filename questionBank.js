@@ -1,9 +1,9 @@
-// DEMO QUESTION BANK — ENGINE VALIDATION ONLY (12 QUESTIONS)
+// DEMO QUESTION BANK — ENGINE VALIDATION ONLY
+// EXACTLY 12 QUESTIONS — NO SAMPLES — NO PLACEHOLDERS
 
 const QUESTION_BANK = [
   {
     id: 1,
-    category: "Animals",
     type: "image",
     question: "Which animal is shown?",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/2/26/YellowLabradorLooking_new.jpg",
@@ -13,7 +13,6 @@ const QUESTION_BANK = [
   },
   {
     id: 2,
-    category: "Animals",
     type: "image",
     question: "Which animal is the ship of the desert?",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/8/8c/Camel_profile.jpg",
@@ -23,7 +22,6 @@ const QUESTION_BANK = [
   },
   {
     id: 3,
-    category: "Vegetables",
     type: "image",
     question: "Which vegetable is shown?",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/7/70/Brinjal.jpg",
@@ -33,7 +31,6 @@ const QUESTION_BANK = [
   },
   {
     id: 4,
-    category: "Dry Fruits",
     type: "image",
     question: "Which dry fruit is shown?",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/0/0a/Almonds.jpg",
@@ -43,7 +40,6 @@ const QUESTION_BANK = [
   },
   {
     id: 5,
-    category: "National Symbols",
     type: "image",
     question: "What is the National Emblem of India?",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/5/55/State_Emblem_of_India.svg",
@@ -53,7 +49,6 @@ const QUESTION_BANK = [
   },
   {
     id: 6,
-    category: "GK",
     type: "text",
     question: "Which body part helps us to see?",
     options: ["Eyes", "Ears", "Nose", "Hands"],
@@ -62,7 +57,6 @@ const QUESTION_BANK = [
   },
   {
     id: 7,
-    category: "GK",
     type: "text",
     question: "Which day comes after Monday?",
     options: ["Tuesday", "Sunday", "Friday", "Saturday"],
@@ -71,7 +65,6 @@ const QUESTION_BANK = [
   },
   {
     id: 8,
-    category: "GK",
     type: "text",
     question: "Which of these is a fruit?",
     options: ["Apple", "Potato", "Onion", "Carrot"],
@@ -80,7 +73,6 @@ const QUESTION_BANK = [
   },
   {
     id: 9,
-    category: "Animals",
     type: "image",
     question: "Which bird is shown?",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/3/32/Peacock_Plumage.jpg",
@@ -90,7 +82,6 @@ const QUESTION_BANK = [
   },
   {
     id: 10,
-    category: "GK",
     type: "text",
     question: "What do we use to write on a blackboard?",
     options: ["Chalk", "Pen", "Crayon", "Marker"],
@@ -99,7 +90,6 @@ const QUESTION_BANK = [
   },
   {
     id: 11,
-    category: "GK",
     type: "text",
     question: "Which colour is the sun?",
     options: ["Yellow", "Blue", "Green", "Red"],
@@ -108,7 +98,6 @@ const QUESTION_BANK = [
   },
   {
     id: 12,
-    category: "GK",
     type: "text",
     question: "Which animal barks?",
     options: ["Dog", "Cat", "Cow", "Goat"],
@@ -116,3 +105,5 @@ const QUESTION_BANK = [
     page: 8
   }
 ];
+
+console.log("Loaded DEMO question bank:", QUESTION_BANK.length);
