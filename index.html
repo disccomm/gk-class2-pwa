@@ -8,130 +8,244 @@
 <style>
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background: #f4f6f8;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f3f6f9;
 }
-
 header {
   background: #2563eb;
   color: white;
-  padding: 14px;
+  padding: 16px;
+  font-size: 20px;
+  font-weight: 600;
   text-align: center;
 }
-
-.container {
-  max-width: 720px;
-  margin: auto;
-  padding: 16px;
-}
-
 .card {
   background: white;
-  border-radius: 14px;
+  margin: 16px;
   padding: 16px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
-
-button {
-  padding: 14px;
-  border: none;
+.progress {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.progress > div {
+  height: 100%;
+  background: #2563eb;
+  width: 0%;
+}
+.option {
+  border: 2px solid #e5e7eb;
   border-radius: 10px;
-  font-size: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
   cursor: pointer;
+  transition: background .2s;
+  min-height: 48px;
 }
-
+.option.correct {
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+.option.wrong {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+.option.disabled {
+  pointer-events: none;
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+button {
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+}
 .primary {
   background: #2563eb;
   color: white;
 }
-
-.primary.disabled {
-  opacity: 0.4;
-  pointer-events: none;
+.secondary {
+  background: #9ca3af;
+  color: white;
+}
+.light {
+  background: #e5e7eb;
+}
+img {
+  width: 100%;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+.hidden { display:none; }
+.exit {
+  float:right;
+  cursor:pointer;
+  font-size:16px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <h2>GK Quiz – Engine Validation</h2>
-</header>
+<header>GK Quiz – Engine Validation</header>
 
-<div class="container">
-
-  <!-- SETUP -->
-  <div class="card" id="setup">
-    <p><b>How many questions?</b></p>
-    <label><input type="radio" name="count" value="5"> 5</label>
-    <label style="margin-left:10px;">
-      <input type="radio" name="count" value="10" checked> 10
-    </label>
-    <br><br>
-    <button id="startBtn" class="primary">Start Quiz</button>
-    <p id="error" style="color:red; display:none;"></p>
-  </div>
-
-  <!-- QUIZ -->
-  <div class="card" id="quiz" style="display:none;">
-    <p><b id="qnum"></b></p>
-    <p id="question"></p>
-  </div>
-
+<div class="card" id="startScreen">
+  <h3>How many questions?</h3>
+  <label><input type="radio" name="count" value="5"> 5</label>
+  <label style="margin-left:12px;"><input type="radio" name="count" value="10"> 10</label>
+  <br/><br/>
+  <button class="primary" id="startBtn">Start Quiz</button>
 </div>
 
-<!-- LOAD QUESTION BANK -->
-<script src="questionBank.demo.js"></script>
+<div class="card hidden" id="quizScreen">
+  <div class="exit" id="exitBtn">Exit ✕</div>
+  <div id="counter"></div>
+  <div class="progress"><div id="bar"></div></div>
+  <h3 id="question"></h3>
+  <img id="qImage" class="hidden"/>
+  <div id="options"></div>
 
+  <div class="actions">
+    <button class="light" id="clearBtn">🧽 Clear</button>
+    <button class="secondary" id="prevBtn">← Previous</button>
+    <button class="light" id="skipBtn">⏭ Skip</button>
+    <button class="primary" id="nextBtn" disabled>Next →</button>
+  </div>
+</div>
+
+<div class="card hidden" id="summaryScreen">
+  <h3>Quiz Summary</h3>
+  <p id="summaryText"></p>
+  <button class="primary" onclick="location.reload()">Restart</button>
+</div>
+
+<script src="questionBank.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const startBtn = document.getElementById('startBtn');
+const startScreen = document.getElementById('startScreen');
+const quizScreen = document.getElementById('quizScreen');
+const summaryScreen = document.getElementById('summaryScreen');
 
-  const startBtn = document.getElementById("startBtn");
-  const setup = document.getElementById("setup");
-  const quizDiv = document.getElementById("quiz");
-  const qnum = document.getElementById("qnum");
-  const question = document.getElementById("question");
-  const error = document.getElementById("error");
+const qEl = document.getElementById('question');
+const imgEl = document.getElementById('qImage');
+const optionsEl = document.getElementById('options');
+const bar = document.getElementById('bar');
+const counter = document.getElementById('counter');
 
-  // 🔒 HARD ENGINE GUARD — NO SILENT FAILURES
-  if (!window.QUESTION_BANK || !Array.isArray(window.QUESTION_BANK)) {
-    startBtn.classList.add("disabled");
-    startBtn.textContent = "Question data not loaded";
-    error.style.display = "block";
-    error.textContent = "ERROR: QUESTION_BANK not found.";
-    console.error("QUESTION_BANK missing or invalid");
-    return;
+const clearBtn = document.getElementById('clearBtn');
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn = document.getElementById('prevBtn');
+const skipBtn = document.getElementById('skipBtn');
+const exitBtn = document.getElementById('exitBtn');
+
+let quiz = [];
+let index = 0;
+let answers = [];
+
+function shuffle(arr){
+  return arr.map(v => ({v, r:Math.random()}))
+            .sort((a,b)=>a.r-b.r)
+            .map(o=>o.v);
+}
+
+startBtn.onclick = () => {
+  const count = document.querySelector('input[name="count"]:checked');
+  if(!count) return alert("Select number of questions");
+
+  quiz = shuffle(QUESTION_BANK).slice(0, Number(count.value));
+  answers = Array(quiz.length).fill(null);
+  startScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  render();
+};
+
+function render(){
+  const q = quiz[index];
+  counter.textContent = `Question ${index+1} of ${quiz.length}`;
+  bar.style.width = ((index+1)/quiz.length*100)+"%";
+  qEl.textContent = q.question;
+
+  if(q.image){
+    imgEl.src = q.image;
+    imgEl.classList.remove('hidden');
+  } else {
+    imgEl.classList.add('hidden');
   }
 
-  console.log("QUESTION_BANK loaded:", QUESTION_BANK.length);
+  optionsEl.innerHTML = '';
+  nextBtn.disabled = answers[index] === null;
 
-  function shuffle(arr) {
-    return [...arr].sort(() => Math.random() - 0.5);
-  }
-
-  startBtn.addEventListener("click", () => {
-    const selected = document.querySelector('input[name="count"]:checked');
-    if (!selected) {
-      alert("Please select number of questions");
-      return;
+  shuffle(q.options).forEach(opt=>{
+    const d = document.createElement('div');
+    d.className = 'option';
+    d.textContent = opt;
+    if(answers[index]){
+      d.classList.add('disabled');
+      if(opt === q.answer) d.classList.add('correct');
+      if(opt === answers[index] && opt !== q.answer) d.classList.add('wrong');
     }
-
-    const count = parseInt(selected.value, 10);
-
-    const quiz = shuffle(QUESTION_BANK).slice(0, count);
-
-    console.log("Starting quiz with", quiz.length, "questions");
-
-    setup.style.display = "none";
-    quizDiv.style.display = "block";
-
-    // Minimal render to prove engine start
-    qnum.textContent = `Question 1 of ${quiz.length}`;
-    question.textContent = quiz[0].question;
+    d.onclick = () => select(opt, d);
+    optionsEl.appendChild(d);
   });
 
-});
-</script>
+  clearBtn.disabled = answers[index] !== null;
+}
 
+function select(opt, el){
+  if(answers[index]) return;
+  answers[index] = opt;
+  nextBtn.disabled = false;
+  render();
+}
+
+nextBtn.onclick = () => {
+  if(index < quiz.length-1){ index++; render(); }
+  else finish();
+};
+
+prevBtn.onclick = () => {
+  if(index>0){ index--; render(); }
+};
+
+skipBtn.onclick = () => {
+  if(!answers[index]) answers[index] = "__SKIPPED__";
+  nextBtn.onclick();
+};
+
+clearBtn.onclick = () => {
+  answers[index] = null;
+  render();
+};
+
+exitBtn.onclick = finish;
+
+function finish(){
+  quizScreen.classList.add('hidden');
+  summaryScreen.classList.remove('hidden');
+
+  let correct=0, skipped=0;
+  answers.forEach((a,i)=>{
+    if(a==="__SKIPPED__") skipped++;
+    else if(a===quiz[i].answer) correct++;
+  });
+
+  summaryText.innerHTML = `
+    Score: ${correct} / ${quiz.length}<br/>
+    Correct: ${correct}<br/>
+    Skipped: ${skipped}<br/>
+    Incorrect: ${quiz.length-correct-skipped}<br/>
+    Percentage: ${Math.round(correct/quiz.length*100)}%
+  `;
+}
+</script>
 </body>
 </html>
