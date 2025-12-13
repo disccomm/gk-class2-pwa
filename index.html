@@ -1,67 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GK Quiz – Engine Validation</title>
 
 <style>
-body { font-family: system-ui, -apple-system; background:#f4f6f8; margin:0; }
-header { background:#2563eb; color:#fff; padding:14px; text-align:center; }
-.container { max-width:720px; margin:auto; padding:14px; }
-.card { background:#fff; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
-
-.progress { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:8px 0; }
-.bar { height:100%; background:#2563eb; width:0%; }
-
-.option {
-  border:1px solid #d1d5db;
-  border-radius:10px;
-  padding:14px;
-  margin:8px 0;
-  font-size:16px;
-}
-.option.correct { background:#dcfce7; border-color:#16a34a; }
-.option.wrong { background:#fee2e2; border-color:#dc2626; }
-
-.actions-row {
-  display:flex;
-  justify-content:space-between;
-  margin:12px 0;
-  font-size:18px;
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: #f4f6f8;
 }
 
-.nav { display:flex; gap:10px; }
+header {
+  background: #2563eb;
+  color: white;
+  padding: 14px;
+  text-align: center;
+}
+
+.container {
+  max-width: 720px;
+  margin: auto;
+  padding: 16px;
+}
+
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+
 button {
-  flex:1;
-  padding:14px;
-  border:none;
-  border-radius:10px;
-  font-size:16px;
-}
-.primary { background:#2563eb; color:white; }
-.secondary { background:#9ca3af; color:white; }
-.disabled { opacity:.4; pointer-events:none; }
-
-img {
-  max-width:100%;
-  border-radius:10px;
-  margin:10px 0;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
+.primary {
+  background: #2563eb;
+  color: white;
 }
-.modal .box {
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  width:80%;
+
+.primary.disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 </style>
 </head>
@@ -74,194 +60,75 @@ img {
 
 <div class="container">
 
-<div class="card" id="setup">
-  <p><b>How many questions?</b></p>
-  <label><input type="radio" name="count" value="5"> 5</label>
-  <label><input type="radio" name="count" value="10" checked> 10</label>
-  <br><br>
-  <button class="primary" id="startBtn">Start Quiz</button>
-</div>
-
-<div class="card" id="quiz" style="display:none;">
-  <div style="display:flex; justify-content:space-between;">
-    <span id="qnum"></span>
-    <span id="exitBtn">Exit ✖</span>
+  <!-- SETUP -->
+  <div class="card" id="setup">
+    <p><b>How many questions?</b></p>
+    <label><input type="radio" name="count" value="5"> 5</label>
+    <label style="margin-left:10px;">
+      <input type="radio" name="count" value="10" checked> 10
+    </label>
+    <br><br>
+    <button id="startBtn" class="primary">Start Quiz</button>
+    <p id="error" style="color:red; display:none;"></p>
   </div>
 
-  <div class="progress"><div class="bar" id="bar"></div></div>
-
-  <p id="question"></p>
-  <div id="image"></div>
-  <div id="options"></div>
-
-  <div class="actions-row">
-    <span id="clearBtn">🧽 Clear</span>
-    <span id="skipBtn">⏭ Skip</span>
+  <!-- QUIZ -->
+  <div class="card" id="quiz" style="display:none;">
+    <p><b id="qnum"></b></p>
+    <p id="question"></p>
   </div>
-
-  <div class="nav">
-    <button class="secondary" id="prevBtn">← Previous</button>
-    <button class="primary disabled" id="nextBtn">Next →</button>
-  </div>
-</div>
-
-<div class="card" id="summary" style="display:none;"></div>
 
 </div>
 
-<div class="modal" id="exitModal">
-  <div class="box">
-    <p><b>Exit Quiz?</b><br>Your progress will be saved.</p>
-    <button class="secondary" id="cancelExit">Cancel</button>
-    <button class="primary" id="confirmExit">Exit Quiz</button>
-  </div>
-</div>
-
+<!-- LOAD QUESTION BANK -->
 <script src="questionBank.demo.js"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  // DOM
+  const startBtn = document.getElementById("startBtn");
   const setup = document.getElementById("setup");
   const quizDiv = document.getElementById("quiz");
-  const summary = document.getElementById("summary");
-
-  const startBtn = document.getElementById("startBtn");
   const qnum = document.getElementById("qnum");
-  const bar = document.getElementById("bar");
   const question = document.getElementById("question");
-  const image = document.getElementById("image");
-  const options = document.getElementById("options");
+  const error = document.getElementById("error");
 
-  const clearBtn = document.getElementById("clearBtn");
-  const skipBtn = document.getElementById("skipBtn");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
+  // 🔒 HARD ENGINE GUARD — NO SILENT FAILURES
+  if (!window.QUESTION_BANK || !Array.isArray(window.QUESTION_BANK)) {
+    startBtn.classList.add("disabled");
+    startBtn.textContent = "Question data not loaded";
+    error.style.display = "block";
+    error.textContent = "ERROR: QUESTION_BANK not found.";
+    console.error("QUESTION_BANK missing or invalid");
+    return;
+  }
 
-  const exitBtn = document.getElementById("exitBtn");
-  const exitModal = document.getElementById("exitModal");
-  const cancelExit = document.getElementById("cancelExit");
-  const confirmExit = document.getElementById("confirmExit");
-
-  // State
-  let quiz = [];
-  let idx = 0;
-  let answers = {};
-  let locked = {};
+  console.log("QUESTION_BANK loaded:", QUESTION_BANK.length);
 
   function shuffle(arr) {
     return [...arr].sort(() => Math.random() - 0.5);
   }
 
-  function startQuiz() {
-    const count = document.querySelector('input[name="count"]:checked').value;
+  startBtn.addEventListener("click", () => {
+    const selected = document.querySelector('input[name="count"]:checked');
+    if (!selected) {
+      alert("Please select number of questions");
+      return;
+    }
 
-    quiz = shuffle(QUESTION_BANK)
-      .slice(0, count)
-      .map(q => ({ ...q, opts: shuffle(q.options) }));
+    const count = parseInt(selected.value, 10);
 
-    idx = 0;
-    answers = {};
-    locked = {};
+    const quiz = shuffle(QUESTION_BANK).slice(0, count);
+
+    console.log("Starting quiz with", quiz.length, "questions");
 
     setup.style.display = "none";
     quizDiv.style.display = "block";
-    render();
-  }
 
-  function render() {
-    const q = quiz[idx];
-
-    qnum.textContent = `Question ${idx + 1} of ${quiz.length}`;
-    bar.style.width = ((idx + 1) / quiz.length * 100) + "%";
-    question.textContent = q.question;
-
-    image.innerHTML = "";
-    if (q.type === "image" && q.imageUrl) {
-      const img = document.createElement("img");
-      img.src = q.imageUrl;
-      img.referrerPolicy = "no-referrer";
-      img.onerror = () => img.style.display = "none";
-      image.appendChild(img);
-    }
-
-    options.innerHTML = "";
-    q.opts.forEach((opt, i) => {
-      const div = document.createElement("div");
-      div.className = "option";
-      div.textContent = String.fromCharCode(65 + i) + ". " + opt;
-
-      if (locked[idx]) {
-        if (opt === q.answer) div.classList.add("correct");
-        else if (opt === answers[idx]) div.classList.add("wrong");
-      }
-
-      div.onclick = () => {
-        if (locked[idx]) return;
-        answers[idx] = opt;
-        locked[idx] = true;
-        clearBtn.classList.add("disabled");
-        render();
-      };
-
-      options.appendChild(div);
-    });
-
-    nextBtn.classList.toggle("disabled", !locked[idx]);
-    clearBtn.classList.toggle("disabled", locked[idx]);
-  }
-
-  function next() {
-    if (idx < quiz.length - 1) {
-      idx++;
-      render();
-    } else {
-      showSummary();
-    }
-  }
-
-  function prev() {
-    if (idx > 0) {
-      idx--;
-      render();
-    }
-  }
-
-  function clearAnswer() {
-    if (locked[idx]) return;
-    delete answers[idx];
-    render();
-  }
-
-  function showSummary() {
-    quizDiv.style.display = "none";
-    summary.style.display = "block";
-
-    let correct = 0;
-    quiz.forEach((q, i) => {
-      if (answers[i] === q.answer) correct++;
-    });
-
-    summary.innerHTML = `
-      <h3>Quiz Summary</h3>
-      <p>Score: ${correct} / ${quiz.length}</p>
-    `;
-  }
-
-  // Events
-  startBtn.onclick = startQuiz;
-  nextBtn.onclick = next;
-  prevBtn.onclick = prev;
-  clearBtn.onclick = clearAnswer;
-  skipBtn.onclick = next;
-
-  exitBtn.onclick = () => exitModal.style.display = "flex";
-  cancelExit.onclick = () => exitModal.style.display = "none";
-  confirmExit.onclick = () => {
-    exitModal.style.display = "none";
-    showSummary();
-  };
+    // Minimal render to prove engine start
+    qnum.textContent = `Question 1 of ${quiz.length}`;
+    question.textContent = quiz[0].question;
+  });
 
 });
 </script>
