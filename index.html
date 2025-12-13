@@ -4,117 +4,188 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>GK Quiz – Batch 1</title>
+
 <style>
-body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f3f4f6}
-header{background:#2563eb;color:#fff;padding:16px;text-align:center}
-.container{max-width:800px;margin:auto;padding:16px}
-.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-button{padding:10px 14px;margin:6px;border:none;border-radius:8px;font-size:16px}
-.primary{background:#2563eb;color:#fff}
-.secondary{background:#9ca3af;color:#fff}
-.option{border:1px solid #d1d5db;padding:10px;border-radius:8px;margin:8px 0}
-.option.correct{background:#dcfce7;border-color:#22c55e}
-.option.wrong{background:#fee2e2;border-color:#ef4444}
-.progress{height:8px;background:#e5e7eb;border-radius:4px;margin:12px 0}
-.bar{height:100%;width:0%;background:#2563eb;border-radius:4px}
-img{max-width:100%;border-radius:8px;margin:8px 0}
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: #f4f6f8;
+  margin: 0;
+}
+header {
+  background: #2563eb;
+  color: white;
+  padding: 16px;
+  text-align: center;
+}
+.container {
+  max-width: 720px;
+  margin: auto;
+  padding: 16px;
+}
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+.progress {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.progress-bar {
+  height: 100%;
+  background: #2563eb;
+  width: 0%;
+}
+.option {
+  border: 1px solid #d1d5db;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.option.selected { background: #dbeafe; border-color: #2563eb; }
+.option.correct { background: #dcfce7; border-color: #16a34a; }
+.option.wrong { background: #fee2e2; border-color: #dc2626; }
+img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 12px 0;
+}
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.primary { background: #2563eb; color: white; }
+.secondary { background: #9ca3af; color: white; }
 </style>
-<script src="questionBank.js"></script>
 </head>
+
 <body>
 
 <header>
-  <h1>GK Quiz – Batch 1</h1>
+  <h2>GK Quiz – Batch 1</h2>
   <p>Working test build</p>
 </header>
 
 <div class="container">
   <div class="card" id="setup">
     <label>Select number of questions:</label><br/>
-    <select id="count"></select><br/><br/>
+    <select id="count">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="20">20</option>
+    </select>
+    <br/><br/>
     <button class="primary" onclick="startQuiz()">Start Quiz</button>
   </div>
 
-  <div class="card" id="quiz" style="display:none">
-    <div class="progress"><div id="bar" class="bar"></div></div>
-    <h2 id="qtext"></h2>
-    <img id="qimg" style="display:none"/>
+  <div class="card" id="quiz" style="display:none;">
+    <div class="progress"><div class="progress-bar" id="bar"></div></div>
+    <h3 id="qnum"></h3>
+    <p id="question"></p>
+    <div id="image"></div>
     <div id="options"></div>
-    <button class="secondary" onclick="clearAnswer()">Clear</button>
-    <button class="secondary" onclick="skip()">Skip</button>
-    <button class="primary" onclick="next()">Next</button>
+
+    <div class="buttons">
+      <button class="secondary" onclick="clearAnswer()">Clear</button>
+      <button class="secondary" onclick="nextQuestion()">Skip</button>
+      <button class="primary" onclick="nextQuestion()">Next</button>
+    </div>
   </div>
 
-  <div class="card" id="review" style="display:none"></div>
+  <div class="card" id="review" style="display:none;"></div>
 </div>
 
+<script src="questionBank.js"></script>
 <script>
-const select = document.getElementById("count");
-for(let i=10;i<=200;i+=10){
-  const o=document.createElement("option");
-  o.value=i;o.text=i;
-  select.appendChild(o);
+let quiz = [], index = 0, answers = {};
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function shuffle(arr){
-  return [...arr].sort(()=>Math.random()-0.5);
-}
-
-let quiz=[],current=0,answers={};
-
-function startQuiz(){
-  quiz = shuffle(QUESTION_BANK).slice(0, Math.min(select.value, QUESTION_BANK.length));
-  document.getElementById("setup").style.display="none";
-  document.getElementById("quiz").style.display="block";
+function startQuiz() {
+  const n = parseInt(document.getElementById("count").value);
+  quiz = shuffle(QUESTION_BANK).slice(0, n).map(q => ({
+    ...q,
+    shuffled: shuffle(q.options)
+  }));
+  document.getElementById("setup").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
   render();
 }
 
-function render(){
-  const q=quiz[current];
-  document.getElementById("qtext").innerText = `Q${current+1} of ${quiz.length}. ${q.question}`;
-  document.getElementById("bar").style.width=((current+1)/quiz.length*100)+"%";
-  const img=document.getElementById("qimg");
-  if(q.imageUrl){img.src=q.imageUrl;img.style.display="block";}
-  else img.style.display="none";
+function render() {
+  const q = quiz[index];
+  document.getElementById("qnum").innerText = `Q${index+1} of ${quiz.length}`;
+  document.getElementById("question").innerText = q.question;
 
-  const opts=document.getElementById("options");
-  opts.innerHTML="";
-  shuffle(q.options).forEach(o=>{
-    const d=document.createElement("div");
-    d.className="option";
-    d.innerText=o;
-    if(answers[current]){
-      if(o===q.answer) d.classList.add("correct");
-      else if(o===answers[current]) d.classList.add("wrong");
-    }
-    d.onclick=()=>{
-      if(answers[current])return;
-      answers[current]=o;
-      render();
-    };
+  document.getElementById("bar").style.width =
+    ((index+1)/quiz.length*100) + "%";
+
+  const img = document.getElementById("image");
+  img.innerHTML = "";
+  if (q.type === "image" && q.imageUrl) {
+    img.innerHTML = `<img src="${q.imageUrl}" alt="question image">`;
+  }
+
+  const opts = document.getElementById("options");
+  opts.innerHTML = "";
+  q.shuffled.forEach(o => {
+    const d = document.createElement("div");
+    d.className = "option";
+    if (answers[index] === o) d.classList.add("selected");
+    d.innerText = o;
+    d.onclick = () => select(o);
     opts.appendChild(d);
   });
 }
 
-function clearAnswer(){ delete answers[current]; render(); }
-function skip(){ if(current<quiz.length-1){current++;render();} }
-function next(){
-  if(current<quiz.length-1){current++;render();}
-  else showReview();
+function select(opt) {
+  answers[index] = opt;
+  render();
 }
 
-function showReview(){
-  document.getElementById("quiz").style.display="none";
-  const r=document.getElementById("review");
-  r.style.display="block";
-  let html="<h2>Review</h2>";
-  quiz.forEach((q,i)=>{
-    html+=`<p><b>${q.question}</b><br/>
-    Your answer: ${answers[i]||"Not Answered"}<br/>
-    Correct answer: <b>${q.answer}</b><br/>
-    Refer PDF page ${q.page}</p><hr/>`;
+function clearAnswer() {
+  delete answers[index];
+  render();
+}
+
+function nextQuestion() {
+  if (index < quiz.length - 1) {
+    index++;
+    render();
+  } else {
+    showReview();
+  }
+}
+
+function showReview() {
+  document.getElementById("quiz").style.display = "none";
+  const r = document.getElementById("review");
+  r.style.display = "block";
+  r.innerHTML = "<h3>Review</h3>";
+
+  quiz.forEach((q,i) => {
+    const u = answers[i] || "Not Answered";
+    r.innerHTML += `
+      <p><b>Q${i+1}.</b> ${q.question}<br/>
+      Your answer: ${u}<br/>
+      Correct answer: <b>${q.answer}</b><br/>
+      Refer PDF page ${q.page}</p><hr/>`;
   });
-  r.innerHTML=html;
 }
 </script>
 </body>
