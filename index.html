@@ -6,88 +6,20 @@
 <title>GK Quiz – Engine Validation</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f4f6f8;
-}
-
-header {
-  background: #2563eb;
-  color: #fff;
-  padding: 14px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.card {
-  background: #fff;
-  margin: 16px;
-  padding: 16px;
-  border-radius: 12px;
-}
-
-.progress {
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 8px 0 12px;
-}
-
-.progress-bar {
-  height: 100%;
-  background: #2563eb;
-  width: 0%;
-}
-
-img {
-  width: 100%;
-  max-height: 220px;
-  object-fit: contain;
-  border-radius: 10px;
-  background: #f1f1f1;
-  margin-bottom: 12px;
-}
-
-.option {
-  border: 1px solid #d1d5db;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.option.correct { background: #dcfce7; border-color: #22c55e; }
-.option.wrong { background: #fee2e2; border-color: #ef4444; }
-.option.disabled { pointer-events: none; }
-
-.row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-button {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  font-size: 16px;
-}
-
-.secondary { background: #e5e7eb; }
-.primary { background: #2563eb; color: #fff; }
-.disabled { opacity: 0.5; pointer-events: none; }
-
-.exit {
-  position: absolute;
-  right: 20px;
-  top: 16px;
-  color: #2563eb;
-  cursor: pointer;
-}
+body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
+header { background:#2563eb; color:#fff; padding:16px; text-align:center; }
+.card { background:#fff; margin:16px; padding:16px; border-radius:12px; }
+button { padding:12px; border:none; border-radius:8px; font-size:16px; }
+.primary { background:#2563eb; color:#fff; }
+.secondary { background:#e5e7eb; }
+.option { border:1px solid #ccc; padding:12px; border-radius:8px; margin-top:8px; cursor:pointer; }
+.option.correct { background:#dcfce7; border-color:#22c55e; }
+.option.wrong { background:#fee2e2; border-color:#ef4444; }
+.option.selected { background:#dbeafe; }
+img { max-width:100%; border-radius:8px; margin:12px 0; }
+.row { display:flex; gap:12px; margin-top:12px; }
+.hidden { display:none; }
+.disabled { opacity:0.5; pointer-events:none; }
 </style>
 </head>
 
@@ -95,132 +27,115 @@ button {
 
 <header>GK Quiz – Engine Validation</header>
 
-<div id="app"></div>
+<div class="card" id="startScreen">
+  <h3>How many questions?</h3>
+  <label><input type="radio" name="count" value="5" checked> 5</label>
+  <label style="margin-left:12px"><input type="radio" name="count" value="10"> 10</label>
+  <br><br>
+  <button class="primary" onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<div class="card hidden" id="quizScreen">
+  <div><b id="progress"></b> <span style="float:right;cursor:pointer" onclick="exitQuiz()">Exit ✕</span></div>
+  <hr>
+  <div id="questionText"></div>
+  <img id="questionImage" class="hidden"/>
+  <div id="options"></div>
+
+  <div class="row">
+    <button id="clearBtn" class="secondary" onclick="clearSelection()">🧽 Clear</button>
+    <button class="secondary" onclick="skip()">⏭ Skip</button>
+  </div>
+
+  <div class="row">
+    <button class="secondary" onclick="prev()">← Previous</button>
+    <button id="nextBtn" class="primary disabled" onclick="next()">Next →</button>
+  </div>
+</div>
+
+<div class="card hidden" id="summaryScreen"></div>
 
 <script src="questionBank.js"></script>
+
 <script>
-let questions = [];
-let index = 0;
-let score = 0;
-let answered = false;
-let answers = [];
+let quiz=[], index=0, answers={};
 
-function shuffle(arr) {
-  return arr.map(v => ({ v, r: Math.random() }))
-            .sort((a,b)=>a.r-b.r)
-            .map(x=>x.v);
+function startQuiz(){
+  const count = +document.querySelector('input[name="count"]:checked').value;
+  quiz = [...QUESTION_BANK].sort(()=>0.5-Math.random()).slice(0,count);
+  index=0; answers={};
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('quizScreen').classList.remove('hidden');
+  render();
 }
 
-function startQuiz(count) {
-  questions = shuffle([...QUESTION_BANK]).slice(0, count).map(q => {
-    const order = shuffle(q.options.map((o,i)=>({o,i})));
-    return {
-      ...q,
-      shuffled: order,
-      correct: order.findIndex(x=>x.i===q.correctIndex)
-    };
+function render(){
+  const q=quiz[index];
+  document.getElementById('progress').innerText=`Question ${index+1} of ${quiz.length}`;
+  document.getElementById('questionText').innerText=q.question;
+
+  const img=document.getElementById('questionImage');
+  if(q.image){ img.src=q.image; img.classList.remove('hidden'); }
+  else img.classList.add('hidden');
+
+  const opts=document.getElementById('options');
+  opts.innerHTML="";
+  q.options.forEach((o,i)=>{
+    const d=document.createElement('div');
+    d.className='option';
+    d.innerText=String.fromCharCode(65+i)+". "+o;
+    d.onclick=()=>select(o,d);
+    opts.appendChild(d);
   });
-  index = 0; score = 0; answers = [];
+
+  document.getElementById('nextBtn').classList.add('disabled');
+  document.getElementById('clearBtn').classList.remove('disabled');
+}
+
+function select(val,el){
+  if(answers[index]) return;
+  answers[index]=val;
+  document.getElementById('nextBtn').classList.remove('disabled');
+  document.getElementById('clearBtn').classList.add('disabled');
+
+  [...document.querySelectorAll('.option')].forEach(o=>{
+    if(o.innerText.includes(quiz[index].answer)) o.classList.add('correct');
+    else if(o===el) o.classList.add('wrong');
+  });
+}
+
+function clearSelection(){
+  if(answers[index]) return;
   render();
 }
 
-function render() {
-  const q = questions[index];
-  const progress = ((index+1)/questions.length)*100;
-
-  document.getElementById("app").innerHTML = `
-    <div class="card">
-      <div class="exit" onclick="finish()">Exit ✕</div>
-      <div>Question ${index+1} of ${questions.length}</div>
-      <div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div>
-      <div><strong>${q.question}</strong></div>
-      ${q.imageUrl ? `<img src="${q.imageUrl}" onerror="this.style.display='none'">` : ``}
-
-      ${q.shuffled.map((x,i)=>`
-        <div class="option" onclick="select(${i})">${String.fromCharCode(65+i)}. ${x.o}</div>
-      `).join("")}
-
-      <div class="row">
-        <button class="secondary" id="clearBtn" onclick="clearAnswer()">🧽 Clear</button>
-        <button class="secondary" onclick="skip()">⏭ Skip</button>
-      </div>
-
-      <div class="row">
-        <button class="secondary ${index===0?'disabled':''}" onclick="prev()">← Previous</button>
-        <button class="primary disabled" id="nextBtn" onclick="next()">
-          ${index===questions.length-1 ? 'Finish Quiz' : 'Next →'}
-        </button>
-      </div>
-    </div>
-  `;
-  answered = false;
+function next(){
+  if(index<quiz.length-1){ index++; render(); }
+  else showSummary();
 }
 
-function select(i) {
-  if (answered) return;
-  answered = true;
-  const q = questions[index];
-  const opts = document.querySelectorAll('.option');
+function prev(){ if(index>0){ index--; render(); } }
 
-  opts.forEach(o=>o.classList.add('disabled'));
-  document.getElementById("clearBtn").classList.add("disabled");
-  document.getElementById("nextBtn").classList.remove("disabled");
+function skip(){ index++; if(index<quiz.length) render(); else showSummary(); }
 
-  if (i === q.correct) {
-    opts[i].classList.add('correct');
-    score++;
-    answers.push({q:q.question, correct:true});
-  } else {
-    opts[i].classList.add('wrong');
-    opts[q.correct].classList.add('correct');
-    answers.push({q:q.question, correct:false});
-  }
+function exitQuiz(){ showSummary(); }
+
+function showSummary(){
+  document.getElementById('quizScreen').classList.add('hidden');
+  const s=document.getElementById('summaryScreen');
+  s.classList.remove('hidden');
+  let correct=0;
+  s.innerHTML="<h3>Quiz Review</h3>";
+  quiz.forEach((q,i)=>{
+    const ok=answers[i]===q.answer;
+    if(ok) correct++;
+    s.innerHTML+=`<p><b>Q${i+1}:</b> ${q.question}<br>
+    Your answer: ${answers[i]||"Skipped"}<br>
+    Correct: ${q.answer} (PDF page ${q.page})</p><hr>`;
+  });
+  s.innerHTML+=`<b>Score:</b> ${correct}/${quiz.length}<br>
+  <button class="primary" onclick="location.reload()">Restart</button>`;
 }
-
-function clearAnswer() {
-  if (answered) return;
-  render();
-}
-
-function next() {
-  if (index === questions.length-1) return finish();
-  index++;
-  render();
-}
-
-function prev() {
-  if (index===0) return;
-  index--;
-  render();
-}
-
-function skip() {
-  answers.push({q:questions[index].question, correct:null});
-  next();
-}
-
-function finish() {
-  document.getElementById("app").innerHTML = `
-    <div class="card">
-      <h3>Quiz Summary</h3>
-      <p>Score: ${score} / ${questions.length}</p>
-      <p>Correct: ${answers.filter(a=>a.correct).length}</p>
-      <p>Incorrect: ${answers.filter(a=>a.correct===false).length}</p>
-      <p>Skipped: ${answers.filter(a=>a.correct===null).length}</p>
-      <p>Percentage: ${Math.round((score/questions.length)*100)}%</p>
-      <button class="primary" onclick="location.reload()">Restart</button>
-    </div>
-  `;
-}
-
-document.getElementById("app").innerHTML = `
-  <div class="card">
-    <h3>How many questions?</h3>
-    <label><input type="radio" name="q" value="5" checked> 5</label><br>
-    <label><input type="radio" name="q" value="10"> 10</label><br><br>
-    <button class="primary" onclick="startQuiz(document.querySelector('input[name=q]:checked').value)">Start Quiz</button>
-  </div>
-`;
 </script>
 </body>
 </html>
