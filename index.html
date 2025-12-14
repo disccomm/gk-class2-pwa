@@ -6,84 +6,125 @@
 <title>GK Quiz</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont;
-    background: #f3f6f9;
-  }
+:root {
+  --blue:#2563eb;
+  --light:#f5f7fb;
+  --card:#ffffff;
+  --border:#e5e7eb;
+  --green:#dcfce7;
+  --green-border:#22c55e;
+  --red:#fee2e2;
+  --red-border:#ef4444;
+}
 
-  header {
-    background: #2563eb;
-    color: #fff;
-    padding: 14px;
-    text-align: center;
-    font-size: 18px;
-    font-weight: 600;
-  }
+* { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
 
-  .card {
-    background: #fff;
-    margin: 16px;
-    padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
+body {
+  margin: 0;
+  background: var(--light);
+}
 
-  .progress {
-    height: 6px;
-    background: #e5e7eb;
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
+header {
+  background: var(--blue);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  font-weight: 600;
+}
 
-  .progress div {
-    height: 100%;
-    background: #2563eb;
-    width: 0%;
-  }
+.container {
+  max-width: 520px;
+  margin: 16px auto;
+  padding: 0 12px;
+}
 
-  img.question-image {
-    max-width: 100%;
-    border-radius: 10px;
-    margin: 10px 0;
-  }
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
 
-  .option {
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    background: #fff;
-  }
+.hidden { display: none; }
 
-  .option.selected { background: #dbeafe; }
-  .option.correct { background: #dcfce7; border-color: #16a34a; }
-  .option.wrong { background: #fee2e2; border-color: #dc2626; }
+.progress {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0 12px;
+}
+.progress > div {
+  height: 100%;
+  background: var(--blue);
+  width: 0%;
+}
 
-  .row {
-    display: flex;
-    gap: 10px;
-    margin-top: 12px;
-  }
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  button {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-  }
+.exit {
+  background: #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
 
-  .btn-secondary { background: #e5e7eb; }
-  .btn-primary { background: #2563eb; color: #fff; }
+img.question-image {
+  width: 100%;
+  border-radius: 12px;
+  margin: 12px 0;
+}
 
-  .review-item {
-    border-bottom: 1px solid #e5e7eb;
-    padding: 10px 0;
-  }
+.option {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.option.correct {
+  background: var(--green);
+  border-color: var(--green-border);
+}
+
+.option.wrong {
+  background: var(--red);
+  border-color: var(--red-border);
+}
+
+.controls-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.controls-row button {
+  flex: 1;
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.primary { background: var(--blue); color: white; }
+.secondary { background: #e5e7eb; }
+.disabled { opacity: 0.5; pointer-events: none; }
+
+.review-item {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+}
 </style>
 </head>
 
@@ -91,140 +132,140 @@
 
 <header>GK Quiz</header>
 
-<div id="app"></div>
+<div class="container">
 
+<!-- START -->
+<div id="start" class="card">
+  <h3>How many questions?</h3>
+  <label><input type="radio" name="count" value="5" checked> 5</label><br>
+  <label><input type="radio" name="count" value="10"> 10</label><br>
+  <label><input type="radio" name="count" value="15"> 15</label><br><br>
+  <button class="primary" onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="card hidden">
+  <div class="top-row">
+    <div id="qCounter"></div>
+    <div class="exit" onclick="finishQuiz()">Exit ✕</div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+
+  <h3 id="questionText"></h3>
+  <img id="qImage" class="question-image hidden"/>
+
+  <div id="options"></div>
+
+  <div class="controls-row">
+    <button class="secondary" onclick="clearAnswer()">🧽 Clear</button>
+    <button class="secondary" onclick="skipQuestion()">⏭ Skip</button>
+  </div>
+
+  <div class="controls-row">
+    <button id="prevBtn" class="secondary" onclick="prevQuestion()">← Previous</button>
+    <button id="nextBtn" class="primary disabled" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div id="review" class="card hidden">
+  <h3>Quiz Review</h3>
+  <div id="reviewList"></div>
+  <h4 id="finalScore"></h4>
+  <button class="primary" onclick="location.reload()">Restart</button>
+</div>
+
+</div>
+
+<script src="questionBank.js"></script>
 <script>
-/* ================= QUESTION BANK ================= */
-
-const questions = [
-  {
-    text: "Which vegetable is shown?",
-    image: "images/brinjal.jpg",
-    options: ["Carrot", "Radish", "Turnip", "Brinjal"],
-    correct: 3,
-    pdfPage: 10
-  },
-  {
-    text: "Which animal is shown?",
-    image: "images/dog.jpg",
-    options: ["Horse", "Dog", "Cat", "Cow"],
-    correct: 1,
-    pdfPage: 8
-  },
-  {
-    text: "Which flower is the National Flower of India?",
-    image: "images/lotus.jpg",
-    options: ["Jasmine", "Lotus", "Rose", "Sunflower"],
-    correct: 1,
-    pdfPage: 12
-  },
-  {
-    text: "Which planet do we live on?",
-    options: ["Mars", "Venus", "Earth", "Jupiter"],
-    correct: 2,
-    pdfPage: 6
-  },
-  {
-    text: "Which bird is the National Bird of India?",
-    image: "images/peacock.jpg",
-    options: ["Crow", "Peacock", "Parrot", "Sparrow"],
-    correct: 1,
-    pdfPage: 14
-  }
-];
-
-/* ================= ENGINE ================= */
-
+let selected = [];
+let answers = [];
 let index = 0;
-let answers = Array(questions.length).fill(null);
 
-const app = document.getElementById("app");
-
-function renderQuestion() {
-  const q = questions[index];
-  const progress = ((index + 1) / questions.length) * 100;
-
-  app.innerHTML = `
-    <div class="card">
-      <div class="progress"><div style="width:${progress}%"></div></div>
-      <strong>Question ${index + 1} of ${questions.length}</strong>
-      <p>${q.text}</p>
-      ${q.image ? `<img src="${q.image}" class="question-image">` : ""}
-      ${q.options.map((o, i) => `
-        <div class="option ${answers[index] === i ? 'selected' : ''}"
-             onclick="selectOption(${i})">${o}</div>
-      `).join("")}
-
-      <div class="row">
-        <button class="btn-secondary" onclick="clearAnswer()">Clear</button>
-        <button class="btn-secondary" onclick="skip()">Skip</button>
-      </div>
-
-      <div class="row">
-        <button class="btn-secondary" onclick="prev()">Previous</button>
-        <button class="btn-primary" onclick="next()">
-          ${index === questions.length - 1 ? "Finish Quiz" : "Next"}
-        </button>
-      </div>
-    </div>
-  `;
+function startQuiz(){
+  const count = Number(document.querySelector('input[name="count"]:checked').value);
+  selected = [...questionBank].slice(0, count);
+  answers = Array(count).fill(null);
+  document.getElementById('start').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  render();
 }
 
-function selectOption(i) {
-  answers[index] = i;
-  renderQuestion();
+function render(){
+  const q = selected[index];
+  document.getElementById('qCounter').innerText = `Question ${index+1} of ${selected.length}`;
+  document.getElementById('bar').style.width = ((index+1)/selected.length*100)+'%';
+  document.getElementById('questionText').innerText = q.text;
+
+  const img = document.getElementById('qImage');
+  if(q.image){
+    img.src = q.image;
+    img.classList.remove('hidden');
+  } else img.classList.add('hidden');
+
+  const optBox = document.getElementById('options');
+  optBox.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const d=document.createElement('div');
+    d.className='option';
+    d.innerText = `${String.fromCharCode(65+i)}. ${opt}`;
+    if(answers[index]!==null){
+      if(i===q.correct) d.classList.add('correct');
+      else if(i===answers[index]) d.classList.add('wrong');
+    }
+    d.onclick=()=>selectAnswer(i);
+    optBox.appendChild(d);
+  });
+
+  document.getElementById('nextBtn').classList.toggle('disabled', answers[index]===null);
+  document.getElementById('prevBtn').classList.toggle('disabled', index===0);
+  document.getElementById('nextBtn').innerText = index===selected.length-1 ? 'Finish Quiz' : 'Next →';
 }
 
-function clearAnswer() {
-  answers[index] = null;
-  renderQuestion();
+function selectAnswer(i){
+  answers[index]=i;
+  render();
 }
 
-function skip() {
-  next();
+function clearAnswer(){
+  answers[index]=null;
+  render();
 }
 
-function prev() {
-  if (index > 0) index--;
-  renderQuestion();
+function skipQuestion(){
+  answers[index]=null;
+  nextQuestion();
 }
 
-function next() {
-  if (index < questions.length - 1) {
-    index++;
-    renderQuestion();
-  } else {
-    showReview();
-  }
+function nextQuestion(){
+  if(index===selected.length-1){ finishQuiz(); return; }
+  index++;
+  render();
 }
 
-function showReview() {
-  let score = 0;
+function prevQuestion(){
+  if(index>0){ index--; render(); }
+}
 
-  const review = questions.map((q, i) => {
-    const correct = q.correct === answers[i];
-    if (correct) score++;
+function finishQuiz(){
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('review').classList.remove('hidden');
 
-    return `
+  let score=0;
+  const list=document.getElementById('reviewList');
+  list.innerHTML='';
+  selected.forEach((q,i)=>{
+    if(answers[i]===q.correct) score++;
+    list.innerHTML+=`
       <div class="review-item">
-        <strong>Q${i + 1}: ${q.text}</strong><br>
-        Your answer: ${answers[i] !== null ? q.options[answers[i]] : "Skipped"}<br>
+        <b>Q${i+1}:</b> ${q.text}<br>
+        Your answer: ${answers[i]!==null?q.options[answers[i]]:'Skipped'}<br>
         Correct: ${q.options[q.correct]} (PDF page ${q.pdfPage})
-      </div>
-    `;
-  }).join("");
-
-  app.innerHTML = `
-    <div class="card">
-      <h2>Quiz Review</h2>
-      ${review}
-      <h3>Score: ${score} / ${questions.length}</h3>
-      <button class="btn-primary" onclick="location.reload()">Restart</button>
-    </div>
-  `;
+      </div>`;
+  });
+  document.getElementById('finalScore').innerText=`Score: ${score}/${selected.length}`;
 }
-
-renderQuestion();
 </script>
 
 </body>
