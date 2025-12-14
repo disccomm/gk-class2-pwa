@@ -1,92 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>GK Quiz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GK Quiz</title>
 
-<style>
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f4f6f8;
-}
-
-header {
-  background: #2563eb;
-  color: white;
-  padding: 16px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.card {
-  background: white;
-  margin: 16px;
-  padding: 16px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-button {
-  border: none;
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.primary {
-  background: #2563eb;
-  color: white;
-}
-
-.secondary {
-  background: #e5e7eb;
-}
-
-.option {
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.option.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
-}
-
-.option.correct {
-  border-color: #16a34a;
-  background: #dcfce7;
-}
-
-.option.wrong {
-  border-color: #dc2626;
-  background: #fee2e2;
-}
-
-.controls {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.controls-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-img {
-  max-width: 100%;
-  border-radius: 10px;
-  margin: 12px 0;
-}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f4f6f8;
+    }
+    header {
+      background: #2563eb;
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .card {
+      background: #fff;
+      max-width: 720px;
+      margin: 24px auto;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+    .options button {
+      width: 100%;
+      text-align: left;
+      padding: 14px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: 2px solid #e5e7eb;
+      background: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .options button.correct {
+      border-color: #16a34a;
+      background: #dcfce7;
+    }
+    .options button.wrong {
+      border-color: #dc2626;
+      background: #fee2e2;
+    }
+    .controls-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .controls-row button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .secondary {
+      background: #e5e7eb;
+    }
+    .primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .primary:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin: 12px 0;
+    }
+    .exit {
+      float: right;
+      background: #e5e7eb;
+      border-radius: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
@@ -95,144 +91,8 @@ img {
 
 <div id="app" class="card"></div>
 
-<!-- 🔴 QUESTION BANK MUST LOAD FIRST -->
 <script src="questionBank.js"></script>
-
-<script>
-/* ---------- HARD VALIDATION ---------- */
-if (!window.questionBank || !Array.isArray(window.questionBank)) {
-  document.getElementById("app").innerHTML =
-    "<b style='color:red'>Question Bank not loaded</b><br>" +
-    "Ensure questionBank.js defines <code>window.questionBank = [...]</code>";
-  throw new Error("Question bank missing");
-}
-
-/* ---------- STATE ---------- */
-let quiz = [];
-let index = 0;
-let answers = {};
-let count = 0;
-
-/* ---------- START SCREEN ---------- */
-function renderStart() {
-  app.innerHTML = `
-    <h3>How many questions?</h3>
-    <label><input type="radio" name="q" value="5"> 5</label><br>
-    <label><input type="radio" name="q" value="10" checked> 10</label><br>
-    <label><input type="radio" name="q" value="15"> 15</label><br><br>
-    <button class="primary" onclick="startQuiz()">Start Quiz</button>
-  `;
-}
-
-/* ---------- START QUIZ ---------- */
-function startQuiz() {
-  count = +document.querySelector("input[name='q']:checked").value;
-  quiz = [...questionBank].sort(() => Math.random() - 0.5).slice(0, count);
-  index = 0;
-  answers = {};
-  renderQuestion();
-}
-
-/* ---------- QUESTION ---------- */
-function renderQuestion() {
-  const q = quiz[index];
-  let html = `
-    <div style="display:flex;justify-content:space-between">
-      <b>Question ${index + 1} of ${quiz.length}</b>
-      <button class="secondary" onclick="finish()">Exit ✕</button>
-    </div>
-    <p>${q.question}</p>
-  `;
-
-  if (q.image) {
-    html += `<img src="${q.image}" alt="question image">`;
-  }
-
-  q.options.forEach((opt, i) => {
-    const letter = String.fromCharCode(65 + i);
-    let cls = "option";
-    if (answers[q.id]) {
-      if (opt === q.answer) cls += " correct";
-      else if (answers[q.id] === opt) cls += " wrong";
-    } else if (answers[q.id] === opt) cls += " selected";
-
-    html += `
-      <div class="${cls}" onclick="selectAnswer('${opt}')">
-        ${letter}. ${opt}
-      </div>
-    `;
-  });
-
-  html += `
-    <div class="controls-row">
-      <button class="secondary" onclick="clearAnswer()">🧽 Clear</button>
-      <button class="secondary" onclick="skip()">⏭ Skip</button>
-    </div>
-
-    <div class="controls">
-      <button class="secondary" onclick="prev()">← Previous</button>
-      <button class="primary" ${answers[q.id] ? "" : "disabled"}
-        onclick="${index === quiz.length - 1 ? "finish()" : "next()"}">
-        ${index === quiz.length - 1 ? "Finish Quiz" : "Next →"}
-      </button>
-    </div>
-  `;
-
-  app.innerHTML = html;
-}
-
-/* ---------- ACTIONS ---------- */
-function selectAnswer(ans) {
-  answers[quiz[index].id] = ans;
-  renderQuestion();
-}
-
-function clearAnswer() {
-  delete answers[quiz[index].id];
-  renderQuestion();
-}
-
-function skip() {
-  if (index < quiz.length - 1) index++;
-  renderQuestion();
-}
-
-function prev() {
-  if (index > 0) index--;
-  renderQuestion();
-}
-
-function next() {
-  index++;
-  renderQuestion();
-}
-
-/* ---------- FINISH ---------- */
-function finish() {
-  let correct = 0;
-  quiz.forEach(q => {
-    if (answers[q.id] === q.answer) correct++;
-  });
-
-  let review = quiz.map((q, i) => `
-    <hr>
-    <b>Q${i+1}:</b> ${q.question}<br>
-    Your answer: ${answers[q.id] || "Skipped"}<br>
-    Correct: ${q.answer} (PDF page ${q.sourcePage})
-  `).join("");
-
-  app.innerHTML = `
-    <h3>Quiz Review</h3>
-    ${review}
-    <hr>
-    <b>Score: ${correct}/${quiz.length}</b><br><br>
-    <button class="primary" onclick="renderStart()">Restart</button>
-  `;
-}
-
-/* ---------- INIT ---------- */
-renderStart();
-</script>
+<script src="app.js"></script>
 
 </body>
 </html>
