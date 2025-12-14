@@ -1,141 +1,148 @@
 let questions = [];
-let selectedCount = 0;
 let current = 0;
-let answers = [];
+let answers = {};
 let locked = false;
 
-const startScreen = document.getElementById("startScreen");
-const quizScreen = document.getElementById("quizScreen");
-const reviewScreen = document.getElementById("reviewScreen");
+/* ---------------- INIT ---------------- */
 
-const questionText = document.getElementById("questionText");
-const optionsDiv = document.getElementById("options");
-const imageEl = document.getElementById("questionImage");
-const progressEl = document.getElementById("progress");
+document.addEventListener("DOMContentLoaded", () => {
+  populateQuestionCount();
+});
 
-const nextBtn = document.getElementById("nextBtn");
-const clearBtn = document.getElementById("clearBtn");
-
-function init() {
-  const max = window.questionBank.length;
+function populateQuestionCount() {
   const select = document.getElementById("questionCount");
+  const total = window.questionBank.length;
 
-  for (let i = 5; i <= max; i += 5) {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = i;
-    select.appendChild(opt);
-  }
+  [5,10,15,20,25,50,total].forEach(n => {
+    if (n <= total) {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n === total ? `All (${total})` : n;
+      select.appendChild(opt);
+    }
+  });
 }
+
+/* ---------------- START ---------------- */
 
 function startQuiz() {
-  selectedCount = parseInt(document.getElementById("questionCount").value);
-  questions = shuffle([...window.questionBank]).slice(0, selectedCount);
-  answers = Array(selectedCount).fill(null);
+  const count = Number(document.getElementById("questionCount").value);
+  if (!count) return alert("Select number of questions");
 
-  startScreen.style.display = "none";
-  quizScreen.style.display = "block";
-  render();
+  questions = shuffle([...window.questionBank]).slice(0, count);
+  current = 0;
+  answers = {};
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("quizScreen").style.display = "block";
+  showQuestion();
 }
 
-function render() {
-  locked = answers[current]?.locked || false;
-  nextBtn.disabled = !answers[current];
+/* ---------------- QUESTION ---------------- */
 
-  progressEl.textContent = `Question ${current + 1} of ${selectedCount}`;
-  questionText.textContent = questions[current].question;
+function showQuestion() {
+  locked = false;
+  const q = questions[current];
 
-  optionsDiv.innerHTML = "";
-  imageEl.style.display = "none";
+  document.getElementById("progress").textContent =
+    `Question ${current + 1} of ${questions.length}`;
 
-  if (questions[current].image) {
-    imageEl.src = `images/${questions[current].image}`;
-    imageEl.style.display = "block";
+  document.getElementById("questionText").textContent = q.question;
+
+  const img = document.getElementById("questionImage");
+  if (q.image) {
+    img.src = `images/${q.image}`;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
   }
 
-  questions[current].options.forEach(opt => {
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+
+  shuffle([...q.options]).forEach(opt => {
     const btn = document.createElement("button");
     btn.textContent = opt;
-    btn.onclick = () => selectAnswer(opt, btn);
-
-    if (answers[current]) {
-      if (opt === questions[current].correctAnswer)
-        btn.classList.add("correct");
-      else if (opt === answers[current].value)
-        btn.classList.add("wrong");
-    }
-
+    btn.onclick = () => selectAnswer(btn, opt);
     optionsDiv.appendChild(btn);
   });
 
-  clearBtn.disabled = locked;
+  document.getElementById("nextBtn").disabled = true;
+  document.getElementById("clearBtn").disabled = false;
 }
 
-function selectAnswer(value, btn) {
+/* ---------------- ANSWER ---------------- */
+
+function selectAnswer(btn, value) {
   if (locked) return;
 
-  answers[current] = { value, locked: true };
+  const q = questions[current];
   locked = true;
-  nextBtn.disabled = false;
+  answers[q.id] = value;
 
-  render();
+  [...document.querySelectorAll(".options button")].forEach(b => {
+    if (b.textContent === q.correctAnswer) b.classList.add("correct");
+    if (b.textContent === value && value !== q.correctAnswer)
+      b.classList.add("wrong");
+  });
+
+  document.getElementById("nextBtn").disabled = false;
+  document.getElementById("clearBtn").disabled = true;
 }
 
 function clearAnswer() {
   if (locked) return;
-  answers[current] = null;
-  render();
+  answers[questions[current].id] = null;
+  showQuestion();
 }
 
+/* ---------------- NAV ---------------- */
+
 function nextQuestion() {
-  if (current === selectedCount - 1) {
-    showReview();
-    return;
-  }
   current++;
-  render();
+  current >= questions.length ? showReview() : showQuestion();
 }
 
 function prevQuestion() {
   if (current > 0) {
     current--;
-    render();
+    showQuestion();
   }
 }
 
 function skipQuestion() {
   current++;
-  if (current >= selectedCount) showReview();
-  else render();
+  current >= questions.length ? showReview() : showQuestion();
 }
 
 function exitQuiz() {
-  if (confirm("Exit quiz? Progress will be lost.")) location.reload();
+  if (confirm("Exit quiz?")) location.reload();
 }
 
+/* ---------------- REVIEW ---------------- */
+
 function showReview() {
-  quizScreen.style.display = "none";
-  reviewScreen.style.display = "block";
+  document.getElementById("quizScreen").style.display = "none";
+  document.getElementById("reviewScreen").style.display = "block";
 
   const review = document.getElementById("reviewContent");
   review.innerHTML = "";
 
   questions.forEach((q, i) => {
     const div = document.createElement("div");
+    const ans = answers[q.id];
     div.innerHTML = `
-      <strong>Q${i + 1}:</strong> ${q.question}<br>
-      Your answer: <span style="color:${answers[i]?.value === q.correctAnswer ? 'green' : 'red'}">
-        ${answers[i]?.value || "Skipped"}
-      </span><br>
-      Correct: <strong>${q.correctAnswer}</strong>
-      <hr>
-    `;
+      <p><strong>Q${i+1}:</strong> ${q.question}</p>
+      <p style="color:${ans===q.correctAnswer?'green':'red'}">
+        Your answer: ${ans || 'Skipped'}<br>
+        Correct: ${q.correctAnswer} (Page ${q.page})
+      </p><hr>`;
     review.appendChild(div);
   });
 }
 
+/* ---------------- UTILS ---------------- */
+
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
-
-init();
