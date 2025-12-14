@@ -1,0 +1,23 @@
+mkdir -p images
+cd images
+
+curl -O https://upload.wikimedia.org/wikipedia/commons/7/7b/Brinjal.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/7/7e/Carrot.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/8/89/Radish.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/6/60/Potato.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/4/4e/Turnip.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/6/6e/Dog.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/3/3f/Cow.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/6/63/Elephant.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/5/5f/Horse.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/0/0b/Parrot.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/1/15/Sparrow.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/7/7e/Crow.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/3/3f/Peacock.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/4/42/Rose.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/1/1a/Jasmine.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/4/40/Sunflower.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/1/11/Lotus.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/9/97/Earth.jpg
+curl -O https://upload.wikimedia.org/wikipedia/commons/0/02/Mars.jpg
