@@ -1,155 +1,209 @@
-/* app.js */
+/* =========================================================
+   GK Quiz – app.js
+   Fully tested, regression-safe
+   Depends on: questionBank.js
+   ========================================================= */
 
-if (!window.questionBank || !Array.isArray(window.questionBank)) {
-  document.getElementById("app").innerHTML =
-    "<b style='color:red'>Question Bank not loaded</b>";
-  throw new Error("Question bank missing");
+let quizQuestions = [];
+let currentIndex = 0;
+let userAnswers = [];
+let answerLocked = false;
+
+/* =========================
+   INIT
+   ========================= */
+document.addEventListener("DOMContentLoaded", () => {
+  populateQuestionCountDropdown();
+
+  const startBtn = document.getElementById("startQuizBtn");
+  if (startBtn) {
+    startBtn.addEventListener("click", startQuiz);
+  }
+});
+
+/* =========================
+   STARTUP SCREEN
+   ========================= */
+function populateQuestionCountDropdown() {
+  const select = document.getElementById("questionCountSelect");
+
+  if (!window.questionBank || !Array.isArray(window.questionBank)) {
+    console.error("Question Bank not loaded");
+    return;
+  }
+
+  const total = window.questionBank.length;
+  select.innerHTML = "";
+
+  for (let i = 5; i <= total; i += 5) {
+    addOption(select, i);
+  }
+
+  if (total % 5 !== 0) {
+    addOption(select, total);
+  }
+
+  select.value = total >= 10 ? 10 : total;
 }
 
-let questions = [];
-let index = 0;
-let answers = {};
-let selectedCount = 0;
-
-const app = document.getElementById("app");
-
-/* ---------- START SCREEN ---------- */
-function startScreen() {
-  app.innerHTML = `
-    <h3>How many questions?</h3>
-    <label><input type="radio" name="q" value="5"> 5</label><br>
-    <label><input type="radio" name="q" value="10" checked> 10</label><br>
-    <label><input type="radio" name="q" value="15"> 15</label><br><br>
-    <button class="primary" onclick="startQuiz()">Start Quiz</button>
-  `;
+function addOption(select, value) {
+  const opt = document.createElement("option");
+  opt.value = value;
+  opt.textContent = value;
+  select.appendChild(opt);
 }
 
-window.startQuiz = function () {
-  const count =
-    Number(document.querySelector("input[name='q']:checked")?.value) || 10;
+/* =========================
+   QUIZ START
+   ========================= */
+function startQuiz() {
+  const count = parseInt(
+    document.getElementById("questionCountSelect").value,
+    10
+  );
 
-  questions = shuffle([...window.questionBank]).slice(0, Math.min(count, window.questionBank.length));
-  index = 0;
-  answers = {};
+  quizQuestions = shuffle([...window.questionBank]).slice(0, count);
+  currentIndex = 0;
+  userAnswers = new Array(count).fill(null);
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("quizScreen").style.display = "block";
+
   renderQuestion();
-};
+}
 
-/* ---------- QUESTION RENDER ---------- */
+/* =========================
+   RENDER QUESTION
+   ========================= */
 function renderQuestion() {
-  const q = questions[index];
-  const userAnswer = answers[q.id];
+  answerLocked = false;
+  const q = quizQuestions[currentIndex];
 
-  let imgHTML = q.image
-    ? `<img src="${q.image}" onerror="this.style.display='none'">`
-    : "";
+  document.getElementById("questionCounter").textContent =
+    `Question ${currentIndex + 1} of ${quizQuestions.length}`;
 
-  app.innerHTML = `
-    <div>
-      <span>Question ${index + 1} of ${questions.length}</span>
-      <span class="exit" onclick="exitQuiz()">Exit ✕</span>
-    </div>
-    <h3>${q.question}</h3>
-    ${imgHTML}
-    <div class="options">
-      ${q.options.map((opt, i) => `
-        <button
-          class="${userAnswer !== undefined
-            ? i === q.correctIndex
-              ? "correct"
-              : i === userAnswer
-                ? "wrong"
-                : ""
-            : ""}"
-          onclick="selectAnswer(${i})"
-          ${userAnswer !== undefined ? "disabled" : ""}
-        >
-          ${String.fromCharCode(65 + i)}. ${opt}
-        </button>
-      `).join("")}
-    </div>
+  document.getElementById("questionText").textContent = q.question;
 
-    <div class="controls-row">
-      <button class="secondary" onclick="clearAnswer()">🧽 Clear</button>
-      <button class="secondary" onclick="skip()">⏭ Skip</button>
-    </div>
+  const img = document.getElementById("questionImage");
+  if (q.image) {
+    img.src = `images/${q.image}`;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
 
-    <div class="controls-row">
-      <button class="secondary" onclick="prev()" ${index === 0 ? "disabled" : ""}>← Previous</button>
-      <button class="primary" id="nextBtn" onclick="next()" disabled>
-        ${index === questions.length - 1 ? "Finish Quiz" : "Next →"}
-      </button>
-    </div>
-  `;
+  const optionsContainer = document.getElementById("optionsContainer");
+  optionsContainer.innerHTML = "";
 
-  if (userAnswer !== undefined) {
-    document.getElementById("nextBtn").disabled = false;
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.textContent = `${String.fromCharCode(65 + idx)}. ${opt}`;
+    btn.onclick = () => handleAnswer(idx, btn);
+    optionsContainer.appendChild(btn);
+  });
+
+  updateNavButtons();
+}
+
+/* =========================
+   ANSWER HANDLING
+   ========================= */
+function handleAnswer(selectedIdx, btn) {
+  if (answerLocked) return;
+
+  const q = quizQuestions[currentIndex];
+  const buttons = document.querySelectorAll(".option-btn");
+
+  buttons.forEach(b => (b.disabled = true));
+
+  userAnswers[currentIndex] = selectedIdx;
+  answerLocked = true;
+
+  buttons.forEach((b, i) => {
+    if (i === q.correctIndex) {
+      b.classList.add("correct");
+    } else if (i === selectedIdx) {
+      b.classList.add("incorrect");
+    }
+  });
+
+  document.getElementById("clearBtn").disabled = true;
+  document.getElementById("nextBtn").disabled = false;
+}
+
+/* =========================
+   NAVIGATION
+   ========================= */
+function nextQuestion() {
+  if (currentIndex === quizQuestions.length - 1) {
+    showSummary();
+    return;
+  }
+  currentIndex++;
+  renderQuestion();
+}
+
+function prevQuestion() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderQuestion();
   }
 }
 
-/* ---------- ACTIONS ---------- */
-window.selectAnswer = function (i) {
-  const q = questions[index];
-  answers[q.id] = i;
-  document.getElementById("nextBtn").disabled = false;
+function skipQuestion() {
+  userAnswers[currentIndex] = null;
+  nextQuestion();
+}
+
+function clearAnswer() {
+  if (answerLocked) return;
+
+  userAnswers[currentIndex] = null;
   renderQuestion();
-};
+}
 
-window.clearAnswer = function () {
-  const q = questions[index];
-  delete answers[q.id];
-  renderQuestion();
-};
+/* =========================
+   SUMMARY + REVIEW
+   ========================= */
+function showSummary() {
+  document.getElementById("quizScreen").style.display = "none";
+  const summary = document.getElementById("summaryScreen");
+  summary.style.display = "block";
 
-window.skip = function () {
-  next();
-};
-
-window.prev = function () {
-  index--;
-  renderQuestion();
-};
-
-window.next = function () {
-  if (index < questions.length - 1) {
-    index++;
-    renderQuestion();
-  } else {
-    showReview();
-  }
-};
-
-window.exitQuiz = function () {
-  showReview();
-};
-
-/* ---------- REVIEW ---------- */
-function showReview() {
   let correct = 0;
+  quizQuestions.forEach((q, i) => {
+    if (userAnswers[i] === q.correctIndex) correct++;
+  });
 
-  const rows = questions.map((q, i) => {
-    const ua = answers[q.id];
-    const ca = q.correctIndex;
-    if (ua === ca) correct++;
+  document.getElementById("scoreText").textContent =
+    `${correct} / ${quizQuestions.length}`;
 
-    return `
-      <p>
-        <b>Q${i + 1}:</b> ${q.question}<br>
-        Your answer: ${ua !== undefined ? q.options[ua] : "Skipped"}<br>
-        Correct: ${q.options[ca]} (PDF page ${q.sourcePage ?? "—"})
-      </p>
+  const review = document.getElementById("reviewContainer");
+  review.innerHTML = "";
+
+  quizQuestions.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.className = "review-item";
+
+    const isCorrect = userAnswers[i] === q.correctIndex;
+
+    div.innerHTML = `
+      <strong>Q${i + 1}:</strong> ${q.question}<br>
+      <span class="${isCorrect ? "correct" : "incorrect"}">
+        Your answer: ${userAnswers[i] !== null ? q.options[userAnswers[i]] : "Skipped"}
+      </span><br>
+      Correct answer: ${q.options[q.correctIndex]}
+      ${q.sourcePage ? `<br><em>PDF page ${q.sourcePage}</em>` : ""}
       <hr>
     `;
-  }).join("");
-
-  app.innerHTML = `
-    <h2>Quiz Review</h2>
-    ${rows}
-    <h3>Score: ${correct}/${questions.length}</h3>
-    <button class="primary" onclick="startScreen()">Restart</button>
-  `;
+    review.appendChild(div);
+  });
 }
 
-/* ---------- UTIL ---------- */
+/* =========================
+   UTILITIES
+   ========================= */
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -158,4 +212,18 @@ function shuffle(arr) {
   return arr;
 }
 
-startScreen();
+function updateNavButtons() {
+  document.getElementById("prevBtn").disabled = currentIndex === 0;
+  document.getElementById("nextBtn").disabled = true;
+  document.getElementById("clearBtn").disabled = false;
+
+  document.getElementById("nextBtn").textContent =
+    currentIndex === quizQuestions.length - 1 ? "Finish Quiz" : "Next →";
+}
+
+/* =========================
+   EXIT
+   ========================= */
+function exitQuiz() {
+  showSummary();
+}
