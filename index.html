@@ -1,124 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>GK Quiz</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system; }
-    body { margin: 0; background: #f4f6f8; }
-
-    header {
-      background: #2563eb;
-      color: white;
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    header h1 { margin: 0; font-size: 20px; }
-
-    header button {
-      background: white;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    main {
-      max-width: 720px;
-      margin: 24px auto;
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    select, button {
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 10px;
-    }
-
-    .btn-primary {
-      background: #2563eb;
-      color: white;
-      border: none;
-    }
-
-    .btn-secondary {
-      background: #e5e7eb;
-      border: none;
-    }
-
-    .options button {
-      width: 100%;
-      margin-bottom: 12px;
-      text-align: left;
-      border: 2px solid #e5e7eb;
-      background: white;
-    }
-
-    .correct { background:#dcfce7; border-color:#16a34a; }
-    .wrong { background:#fee2e2; border-color:#dc2626; }
-
-    img { max-width:100%; border-radius:12px; margin-bottom:16px; }
-
-    .nav {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:16px;
-      justify-content:space-between;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lumina Learning v6</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
-
 <body>
+    <div id="app">
+        <main id="hub-view" class="view active">
+            <header class="ios-header">
+                <h1>Lumina</h1>
+                <p>Welcome back, Explorer!</p>
+            </header>
 
-<header>
-  <h1>GK Quiz</h1>
-  <button onclick="exitQuiz()">❌ Exit</button>
-</header>
+            <div class="glass-container">
+                <div class="import-card">
+                    <input type="text" id="topic-name" placeholder="Topic Name (e.g. Science)">
+                    <select id="category-picker">
+                        <option value="GK">General Knowledge</option>
+                        <option value="Maths">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="S&T">Science & Tech</option>
+                        <option value="Comp">Computers</option>
+                    </select>
+                    <div class="drop-zone" onclick="document.getElementById('pdf-file').click()">
+                        <span id="file-status">Tap to Upload PDF</span>
+                        <input type="file" id="pdf-file" hidden accept=".pdf">
+                    </div>
+                    <div class="zone-selector">
+                        <label>Level:</label>
+                        <input type="range" id="age-range" min="5" max="16" value="10">
+                        <span id="age-val">10 yrs</span>
+                    </div>
+                    <button class="primary-btn pulse" onclick="processAndLoad()">Build My Library</button>
+                </div>
 
-<main id="app">
+                <div id="action-tiles" class="tiles-grid hidden">
+                    <div class="tile purple" onclick="openQuizConfig()">
+                        <span class="icon">🚀</span>
+                        <h3>Instant Quiz</h3>
+                    </div>
+                    <div class="tile orange" onclick="startFlashcards()">
+                        <span class="icon">🎴</span>
+                        <h3>Flashcards</h3>
+                    </div>
+                    <div class="tile blue" onclick="generateWorksheets()">
+                        <span class="icon">📝</span>
+                        <h3>Worksheets</h3>
+                    </div>
+                </div>
+            </div>
+        </main>
 
-  <!-- START -->
-  <div id="startScreen">
-    <h2>Select number of questions</h2>
-    <select id="questionCount"></select><br><br>
-    <button class="btn-primary" onclick="startQuiz()">Start Quiz</button>
-  </div>
+        <section id="quiz-view" class="view">
+            <div class="quiz-top-bar glass">
+                <button onclick="initiateReview()">Exit X</button>
+                <button onclick="togglePause()" id="pause-btn">⏸️</button>
+                <div class="timer" id="timer">00:00</div>
+                <div class="progress-bar-bg"><div id="progress-fill"></div></div>
+            </div>
+            <div id="quiz-content">
+                </div>
+            <div class="quiz-footer">
+                <button class="icon-btn" onclick="prevQuestion()" id="prev-btn">Prev</button>
+                <button class="icon-btn" onclick="clearSelection()" id="clear-btn">🧹 Clear</button>
+                <button class="icon-btn" onclick="skipQuestion()" id="skip-btn">Skip</button>
+                <button id="next-btn" class="main-action" disabled onclick="handleNext()">Next</button>
+            </div>
+        </section>
 
-  <!-- QUIZ -->
-  <div id="quizScreen" style="display:none">
-    <div id="progress"></div>
-    <h2 id="questionText"></h2>
-    <img id="questionImage" style="display:none" />
-    <div class="options" id="options"></div>
-
-    <div class="nav">
-      <button class="btn-secondary" onclick="prevQuestion()">← Previous</button>
-      <button class="btn-secondary" id="clearBtn" onclick="clearAnswer()">🧽 Clear</button>
-      <button class="btn-secondary" onclick="skipQuestion()">⏭ Skip</button>
-      <button class="btn-primary" id="nextBtn" disabled onclick="nextQuestion()">Next →</button>
+        <div id="modal-overlay" class="modal hidden">
+            <div class="modal-content glass">
+                <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.add('hidden')">✕</button>
+                <h2 id="modal-title">Settings</h2>
+                <div id="modal-body"></div>
+                <button id="modal-action-btn" class="primary-btn pulse">Action</button>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <!-- REVIEW -->
-  <div id="reviewScreen" style="display:none">
-    <h2>Quiz Review</h2>
-    <div id="reviewContent"></div>
-    <button class="btn-primary" onclick="location.reload()">Restart</button>
-  </div>
-
-</main>
-
-<script src="questionBank.js"></script>
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
