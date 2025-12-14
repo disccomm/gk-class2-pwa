@@ -1,98 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GK Quiz</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GK Quiz</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f4f6f8;
-    }
-    header {
-      background: #2563eb;
-      color: #fff;
-      padding: 16px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: 600;
-    }
-    .card {
-      background: #fff;
-      max-width: 720px;
-      margin: 24px auto;
-      padding: 20px;
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.08);
-    }
-    .options button {
-      width: 100%;
-      text-align: left;
-      padding: 14px;
-      margin: 8px 0;
-      border-radius: 10px;
-      border: 2px solid #e5e7eb;
-      background: #fff;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .options button.correct {
-      border-color: #16a34a;
-      background: #dcfce7;
-    }
-    .options button.wrong {
-      border-color: #dc2626;
-      background: #fee2e2;
-    }
-    .controls-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
-    .controls-row button {
-      flex: 1;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      font-size: 15px;
-      cursor: pointer;
-    }
-    .secondary {
-      background: #e5e7eb;
-    }
-    .primary {
-      background: #2563eb;
-      color: #fff;
-    }
-    .primary:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-    img {
-      max-width: 100%;
-      border-radius: 12px;
-      margin: 12px 0;
-    }
-    .exit {
-      float: right;
-      background: #e5e7eb;
-      border-radius: 20px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-  </style>
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: #f2f4f8;
+}
+
+header {
+  background: #2563eb;
+  color: #fff;
+  padding: 16px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.container {
+  max-width: 600px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.1);
+}
+
+button {
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+}
+
+.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.secondary {
+  background: #e5e7eb;
+}
+
+.option {
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.option.correct {
+  border-color: #16a34a;
+  background: #dcfce7;
+}
+
+.option.wrong {
+  border-color: #dc2626;
+  background: #fee2e2;
+}
+
+img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+.hidden { display: none; }
+</style>
 </head>
 
 <body>
 
 <header>GK Quiz</header>
 
-<div id="app" class="card"></div>
+<div class="container" id="startScreen">
+  <h2>How many questions?</h2>
+  <label><input type="radio" name="count" value="5"> 5</label><br>
+  <label><input type="radio" name="count" value="10" checked> 10</label><br>
+  <label><input type="radio" name="count" value="15"> 15</label><br><br>
+  <button class="primary" onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<div class="container hidden" id="quizScreen">
+  <div id="progress"></div>
+  <h3 id="questionText"></h3>
+  <img id="questionImage" class="hidden"/>
+  <div id="options"></div>
+
+  <div style="display:flex; gap:10px; margin-top:15px;">
+    <button class="secondary" id="clearBtn" onclick="clearSelection()">Clear</button>
+    <button class="secondary" onclick="skipQuestion()">Skip</button>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-top:15px;">
+    <button class="secondary" onclick="prevQuestion()">← Previous</button>
+    <button class="primary" id="nextBtn" disabled onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<div class="container hidden" id="reviewScreen">
+  <h2>Quiz Review</h2>
+  <div id="reviewList"></div>
+  <button class="primary" onclick="location.reload()">Restart</button>
+</div>
 
 <script src="questionBank.js"></script>
-<script src="app.js"></script>
+<script>
+let quiz=[], index=0, answers=[], locked=false;
 
+function startQuiz(){
+  const count=Number(document.querySelector('input[name="count"]:checked').value);
+  quiz=[...window.questionBank].sort(()=>Math.random()-0.5).slice(0,count);
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('quizScreen').classList.remove('hidden');
+  render();
+}
+
+function render(){
+  locked=false;
+  document.getElementById('nextBtn').disabled=true;
+  document.getElementById('clearBtn').disabled=false;
+
+  const q=quiz[index];
+  document.getElementById('progress').innerText=`Question ${index+1} of ${quiz.length}`;
+  document.getElementById('questionText').innerText=q.question;
+
+  const img=document.getElementById('questionImage');
+  if(q.image){ img.src='images/'+q.image; img.classList.remove('hidden'); }
+  else img.classList.add('hidden');
+
+  const opts=document.getElementById('options');
+  opts.innerHTML='';
+  q.options.forEach(opt=>{
+    const d=document.createElement('div');
+    d.className='option';
+    d.innerText=opt;
+    d.onclick=()=>select(opt,d);
+    opts.appendChild(d);
+  });
+}
+
+function select(opt,el){
+  if(locked) return;
+  locked=true;
+  document.getElementById('nextBtn').disabled=false;
+  document.getElementById('clearBtn').disabled=true;
+
+  const q=quiz[index];
+  answers[index]=opt;
+
+  [...document.querySelectorAll('.option')].forEach(o=>{
+    if(o.innerText===q.correctAnswer) o.classList.add('correct');
+    else if(o.innerText===opt) o.classList.add('wrong');
+  });
+}
+
+function clearSelection(){ if(!locked) render(); }
+function nextQuestion(){ index<quiz.length-1 ? (index++,render()) : showReview(); }
+function prevQuestion(){ if(index>0){ index--; render(); } }
+function skipQuestion(){ answers[index]=null; nextQuestion(); }
+
+function showReview(){
+  document.getElementById('quizScreen').classList.add('hidden');
+  document.getElementById('reviewScreen').classList.remove('hidden');
+
+  const list=document.getElementById('reviewList');
+  list.innerHTML='';
+  quiz.forEach((q,i)=>{
+    const d=document.createElement('div');
+    const ok=answers[i]===q.correctAnswer;
+    d.innerHTML=`<b>Q${i+1}:</b> ${q.question}<br>
+    Your answer: <span style="color:${ok?'green':'red'}">${answers[i]||'Skipped'}</span><br>
+    Correct: ${q.correctAnswer} (PDF page ${q.page})<hr>`;
+    list.appendChild(d);
+  });
+}
+</script>
 </body>
 </html>
