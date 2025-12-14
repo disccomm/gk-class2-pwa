@@ -3,132 +3,229 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GK Quiz – Engine Validation</title>
+<title>GK Quiz</title>
 
 <style>
-  body { font-family: system-ui, -apple-system, BlinkMacSystemFont; margin: 0; background:#f4f7fb; }
-  header { background:#2563eb; color:#fff; padding:16px; text-align:center; font-size:20px; }
-  .card { background:#fff; margin:16px; padding:16px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,.08); }
-  .progress { height:6px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin:8px 0; }
-  .progress-bar { height:100%; background:#2563eb; width:0%; }
-  img { max-width:100%; border-radius:10px; margin:10px 0; }
-  .option { border:1px solid #d1d5db; padding:12px; border-radius:10px; margin:8px 0; cursor:pointer; }
-  .option.correct { background:#dcfce7; border-color:#22c55e; }
-  .option.wrong { background:#fee2e2; border-color:#ef4444; }
-  .controls { display:flex; gap:8px; margin-top:12px; }
-  .controls button { flex:1; padding:12px; border:none; border-radius:10px; font-size:16px; }
-  .primary { background:#2563eb; color:white; }
-  .secondary { background:#e5e7eb; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont;
+    background: #f3f6f9;
+  }
+
+  header {
+    background: #2563eb;
+    color: #fff;
+    padding: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .card {
+    background: #fff;
+    margin: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .progress {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .progress div {
+    height: 100%;
+    background: #2563eb;
+    width: 0%;
+  }
+
+  img.question-image {
+    max-width: 100%;
+    border-radius: 10px;
+    margin: 10px 0;
+  }
+
+  .option {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    background: #fff;
+  }
+
+  .option.selected { background: #dbeafe; }
+  .option.correct { background: #dcfce7; border-color: #16a34a; }
+  .option.wrong { background: #fee2e2; border-color: #dc2626; }
+
+  .row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .btn-secondary { background: #e5e7eb; }
+  .btn-primary { background: #2563eb; color: #fff; }
+
+  .review-item {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 0;
+  }
 </style>
 </head>
 
 <body>
-<header>GK Quiz – Engine Validation</header>
 
-<div id="app" class="card"></div>
+<header>GK Quiz</header>
 
-<script type="module">
-import QUESTION_BANK from './questionBank.js';
+<div id="app"></div>
 
-let questions = [];
+<script>
+/* ================= QUESTION BANK ================= */
+
+const questions = [
+  {
+    text: "Which vegetable is shown?",
+    image: "images/brinjal.jpg",
+    options: ["Carrot", "Radish", "Turnip", "Brinjal"],
+    correct: 3,
+    pdfPage: 10
+  },
+  {
+    text: "Which animal is shown?",
+    image: "images/dog.jpg",
+    options: ["Horse", "Dog", "Cat", "Cow"],
+    correct: 1,
+    pdfPage: 8
+  },
+  {
+    text: "Which flower is the National Flower of India?",
+    image: "images/lotus.jpg",
+    options: ["Jasmine", "Lotus", "Rose", "Sunflower"],
+    correct: 1,
+    pdfPage: 12
+  },
+  {
+    text: "Which planet do we live on?",
+    options: ["Mars", "Venus", "Earth", "Jupiter"],
+    correct: 2,
+    pdfPage: 6
+  },
+  {
+    text: "Which bird is the National Bird of India?",
+    image: "images/peacock.jpg",
+    options: ["Crow", "Peacock", "Parrot", "Sparrow"],
+    correct: 1,
+    pdfPage: 14
+  }
+];
+
+/* ================= ENGINE ================= */
+
 let index = 0;
-let answers = {};
+let answers = Array(questions.length).fill(null);
 
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
-
-function startQuiz(count) {
-  questions = shuffle(QUESTION_BANK).slice(0, count);
-  index = 0;
-  answers = {};
-  renderQuestion();
-}
+const app = document.getElementById("app");
 
 function renderQuestion() {
   const q = questions[index];
-  const app = document.getElementById('app');
-  const progress = Math.round(((index+1)/questions.length)*100);
+  const progress = ((index + 1) / questions.length) * 100;
 
   app.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <strong>Question ${index+1} of ${questions.length}</strong>
-      <button class="secondary" onclick="showSummary()">Exit ×</button>
-    </div>
+    <div class="card">
+      <div class="progress"><div style="width:${progress}%"></div></div>
+      <strong>Question ${index + 1} of ${questions.length}</strong>
+      <p>${q.text}</p>
+      ${q.image ? `<img src="${q.image}" class="question-image">` : ""}
+      ${q.options.map((o, i) => `
+        <div class="option ${answers[index] === i ? 'selected' : ''}"
+             onclick="selectOption(${i})">${o}</div>
+      `).join("")}
 
-    <div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div>
+      <div class="row">
+        <button class="btn-secondary" onclick="clearAnswer()">Clear</button>
+        <button class="btn-secondary" onclick="skip()">Skip</button>
+      </div>
 
-    <h3>${q.text}</h3>
-    ${q.image ? `<img src="${q.image}" alt="question image">` : ''}
-
-    ${q.options.map((o,i)=>`
-      <div class="option" onclick="selectAnswer(${i})">${String.fromCharCode(65+i)}. ${o}</div>
-    `).join('')}
-
-    <div class="controls">
-      <button class="secondary" onclick="clearAnswer()">Clear</button>
-      <button class="secondary" onclick="skip()">Skip</button>
-    </div>
-
-    <div class="controls">
-      <button class="secondary" ${index===0?'disabled':''} onclick="prev()">← Previous</button>
-      <button class="primary" ${answers[index]==null?'disabled':''}
-        onclick="${index===questions.length-1?'finish()':'next()'}">
-        ${index===questions.length-1?'Finish Quiz':'Next →'}
-      </button>
+      <div class="row">
+        <button class="btn-secondary" onclick="prev()">Previous</button>
+        <button class="btn-primary" onclick="next()">
+          ${index === questions.length - 1 ? "Finish Quiz" : "Next"}
+        </button>
+      </div>
     </div>
   `;
 }
 
-window.selectAnswer = function(i){
+function selectOption(i) {
   answers[index] = i;
-  document.querySelectorAll('.option').forEach((el,idx)=>{
-    el.classList.remove('correct','wrong');
-    if(idx===i){
-      el.classList.add(idx===questions[index].correctIndex?'correct':'wrong');
-    }
-  });
   renderQuestion();
 }
 
-window.clearAnswer = ()=>{ delete answers[index]; renderQuestion(); }
-window.skip = ()=>{ next(); }
-window.next = ()=>{ index++; renderQuestion(); }
-window.prev = ()=>{ index--; renderQuestion(); }
+function clearAnswer() {
+  answers[index] = null;
+  renderQuestion();
+}
 
-window.finish = showSummary;
+function skip() {
+  next();
+}
 
-function showSummary(){
-  let correct=0, skipped=0;
-  const app=document.getElementById('app');
+function prev() {
+  if (index > 0) index--;
+  renderQuestion();
+}
 
-  const review = questions.map((q,i)=>{
-    const a=answers[i];
-    if(a==null) skipped++;
-    else if(a===q.correctIndex) correct++;
+function next() {
+  if (index < questions.length - 1) {
+    index++;
+    renderQuestion();
+  } else {
+    showReview();
+  }
+}
+
+function showReview() {
+  let score = 0;
+
+  const review = questions.map((q, i) => {
+    const correct = q.correct === answers[i];
+    if (correct) score++;
+
     return `
-      <p><strong>Q${i+1}:</strong> ${q.text}<br>
-      Your answer: ${a!=null?q.options[a]:'Skipped'}<br>
-      Correct: ${q.options[q.correctIndex]} (PDF page ${q.sourcePage})</p><hr>
+      <div class="review-item">
+        <strong>Q${i + 1}: ${q.text}</strong><br>
+        Your answer: ${answers[i] !== null ? q.options[answers[i]] : "Skipped"}<br>
+        Correct: ${q.options[q.correct]} (PDF page ${q.pdfPage})
+      </div>
     `;
-  }).join('');
+  }).join("");
 
-  app.innerHTML=`
-    <h2>Quiz Review</h2>
-    ${review}
-    <h3>Score: ${correct}/${questions.length}</h3>
-    <button class="primary" onclick="location.reload()">Restart</button>
+  app.innerHTML = `
+    <div class="card">
+      <h2>Quiz Review</h2>
+      ${review}
+      <h3>Score: ${score} / ${questions.length}</h3>
+      <button class="btn-primary" onclick="location.reload()">Restart</button>
+    </div>
   `;
 }
 
-document.getElementById('app').innerHTML = `
-  <h3>How many questions?</h3>
-  <label><input type="radio" name="q" value="5"> 5</label><br>
-  <label><input type="radio" name="q" value="10" checked> 10</label><br><br>
-  <button class="primary" onclick="startQuiz(Number(document.querySelector('input[name=q]:checked').value))">
-    Start Quiz
-  </button>
-`;
+renderQuestion();
 </script>
+
 </body>
 </html>
