@@ -2,84 +2,602 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lumina Learning v6</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius Junior: GK Level 2</title>
+    <meta name="theme-color" content="#FFD700">
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2C3E50;
+            --light: #F7F9FC;
+            --card-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            margin: 0;
+            padding: 0;
+            color: var(--dark);
+            user-select: none;
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(135deg, var(--primary), #FF8E53);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; }
+        .subtitle { font-size: 0.9rem; opacity: 0.9; }
+
+        /* --- Navigation --- */
+        nav {
+            display: flex;
+            justify-content: center;
+            background: white;
+            padding: 0.5rem;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-weight: bold;
+            color: #888;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* --- Main Container --- */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+            min-height: 80vh;
+        }
+
+        /* --- Flashcard Mode --- */
+        .flashcard-container {
+            perspective: 1000px;
+            margin-top: 2rem;
+            height: 400px;
+            cursor: pointer;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            padding: 2rem;
+            box-sizing: border-box;
+            text-align: center;
+            background: white;
+            border: 4px solid var(--secondary);
+        }
+
+        .card-back {
+            background: var(--secondary);
+            color: white;
+            transform: rotateY(180deg);
+            border-color: white;
+        }
+
+        .card-emoji { font-size: 5rem; margin-bottom: 1rem; }
+        .card-text { font-size: 1.8rem; font-weight: bold; }
+        .card-category { 
+            position: absolute; 
+            top: 1rem; 
+            left: 1rem; 
+            font-size: 0.8rem; 
+            background: rgba(0,0,0,0.1); 
+            padding: 0.2rem 0.6rem; 
+            border-radius: 10px; 
+        }
+        .card-page {
+            position: absolute; 
+            bottom: 1rem; 
+            right: 1rem; 
+            font-size: 0.8rem; 
+            opacity: 0.7;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            background: var(--dark);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: var(--primary); }
+
+        /* --- Quiz Mode --- */
+        .quiz-setup, .quiz-active, .quiz-results {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        .hidden { display: none; }
+
+        .question-text { font-size: 1.5rem; margin-bottom: 2rem; color: var(--dark); }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            background: var(--light);
+            border: 2px solid #ddd;
+            padding: 1.5rem;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover { border-color: var(--secondary); background: #eafbf9; }
+        .option-btn.selected { background: var(--secondary); color: white; border-color: var(--secondary); }
+        
+        .feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .correct { background: #d4edda; color: #155724; }
+        .incorrect { background: #f8d7da; color: #721c24; }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Results Review */
+        .review-item {
+            border-bottom: 1px solid #eee;
+            padding: 1rem 0;
+            text-align: left;
+        }
+        .review-q { font-weight: bold; color: var(--dark); }
+        .review-a { color: var(--primary); }
+        .review-explain { font-size: 0.9rem; color: #666; font-style: italic; }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .card-text { font-size: 1.4rem; }
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <main id="hub-view" class="view active">
-            <header class="ios-header">
-                <h1>Lumina</h1>
-                <p>Welcome back, Explorer!</p>
-            </header>
 
-            <div class="glass-container">
-                <div class="import-card">
-                    <input type="text" id="topic-name" placeholder="Topic Name (e.g. Science)">
-                    <select id="category-picker">
-                        <option value="GK">General Knowledge</option>
-                        <option value="Maths">Mathematics</option>
-                        <option value="Science">Science</option>
-                        <option value="S&T">Science & Tech</option>
-                        <option value="Comp">Computers</option>
-                    </select>
-                    <div class="drop-zone" onclick="document.getElementById('pdf-file').click()">
-                        <span id="file-status">Tap to Upload PDF</span>
-                        <input type="file" id="pdf-file" hidden accept=".pdf">
-                    </div>
-                    <div class="zone-selector">
-                        <label>Level:</label>
-                        <input type="range" id="age-range" min="5" max="16" value="10">
-                        <span id="age-val">10 yrs</span>
-                    </div>
-                    <button class="primary-btn pulse" onclick="processAndLoad()">Build My Library</button>
+<header>
+    <h1>Genius Junior 🦁</h1>
+    <div class="subtitle">Foundation Level 2 • General Knowledge</div>
+</header>
+
+<nav>
+    <button class="nav-btn active" onclick="switchTab('flashcards')">🎴 Flashcards</button>
+    <button class="nav-btn" onclick="switchTab('quiz')">🧠 Quiz</button>
+</nav>
+
+<main id="app">
+    <div id="flashcards-view">
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <select id="topic-filter" class="btn" style="padding: 0.5rem; font-size: 1rem; background: white; color: var(--dark); border: 2px solid #ddd;">
+                <option value="all">All Topics</option>
+                <option value="Our Planet">Our Planet (Earth/Animals)</option>
+                <option value="Vegetables & Fruits">Vegetables & Fruits</option>
+                <option value="Verbal Ability">Verbal Ability</option>
+                <option value="India">Our Country India</option>
+                <option value="Sports">World of Sports</option>
+                <option value="Mixed Bag">Mixed Bag</option>
+            </select>
+        </div>
+
+        <div class="flashcard-container" onclick="flipCard()">
+            <div class="flashcard" id="card-element">
+                <div class="card-face card-front">
+                    <div class="card-category" id="fc-category">Category</div>
+                    <div class="card-emoji" id="fc-image">❓</div>
+                    <div class="card-text" id="fc-question">Question</div>
+                    <div style="margin-top:1rem; font-size:0.8rem; color:#999;">(Tap to Flip)</div>
                 </div>
-
-                <div id="action-tiles" class="tiles-grid hidden">
-                    <div class="tile purple" onclick="openQuizConfig()">
-                        <span class="icon">🚀</span>
-                        <h3>Instant Quiz</h3>
-                    </div>
-                    <div class="tile orange" onclick="startFlashcards()">
-                        <span class="icon">🎴</span>
-                        <h3>Flashcards</h3>
-                    </div>
-                    <div class="tile blue" onclick="generateWorksheets()">
-                        <span class="icon">📝</span>
-                        <h3>Worksheets</h3>
-                    </div>
+                <div class="card-face card-back">
+                    <div class="card-emoji" id="fc-result-emoji">💡</div>
+                    <div class="card-text" id="fc-answer">Answer</div>
+                    <div class="card-page" id="fc-page">Pg X</div>
                 </div>
-            </div>
-        </main>
-
-        <section id="quiz-view" class="view">
-            <div class="quiz-top-bar glass">
-                <button onclick="initiateReview()">Exit X</button>
-                <button onclick="togglePause()" id="pause-btn">⏸️</button>
-                <div class="timer" id="timer">00:00</div>
-                <div class="progress-bar-bg"><div id="progress-fill"></div></div>
-            </div>
-            <div id="quiz-content">
-                </div>
-            <div class="quiz-footer">
-                <button class="icon-btn" onclick="prevQuestion()" id="prev-btn">Prev</button>
-                <button class="icon-btn" onclick="clearSelection()" id="clear-btn">🧹 Clear</button>
-                <button class="icon-btn" onclick="skipQuestion()" id="skip-btn">Skip</button>
-                <button id="next-btn" class="main-action" disabled onclick="handleNext()">Next</button>
-            </div>
-        </section>
-
-        <div id="modal-overlay" class="modal hidden">
-            <div class="modal-content glass">
-                <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.add('hidden')">✕</button>
-                <h2 id="modal-title">Settings</h2>
-                <div id="modal-body"></div>
-                <button id="modal-action-btn" class="primary-btn pulse">Action</button>
             </div>
         </div>
+
+        <div class="controls">
+            <button class="btn" onclick="prevCard()">← Prev</button>
+            <button class="btn btn-primary" onclick="nextCard()">Next →</button>
+        </div>
     </div>
-    <script src="app.js"></script>
+
+    <div id="quiz-view" class="hidden">
+        
+        <div id="quiz-setup" class="quiz-setup">
+            <h2>Ready to Test Your Knowledge?</h2>
+            <p>Select number of questions:</p>
+            <select id="question-count" class="btn" style="background: white; color: var(--dark); margin-bottom: 2rem;">
+                <option value="10">10 Questions</option>
+                <option value="20">20 Questions</option>
+                <option value="50">50 Questions</option>
+                <option value="100">All Available</option>
+            </select>
+            <br>
+            <button class="btn btn-primary" onclick="startQuiz()">Start Quiz 🚀</button>
+        </div>
+
+        <div id="quiz-active" class="quiz-active hidden">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div id="quiz-image" style="font-size: 4rem; margin-bottom: 1rem;"></div>
+            <div class="question-text" id="quiz-question">Question Text</div>
+            <div class="options-grid" id="quiz-options">
+                </div>
+            <div id="quiz-feedback" class="feedback hidden"></div>
+            <div class="controls">
+                <button class="btn" id="next-q-btn" onclick="nextQuestion()" disabled>Next ➡</button>
+            </div>
+        </div>
+
+        <div id="quiz-results" class="quiz-results hidden">
+            <h2>Quiz Complete! 🎉</h2>
+            <div style="font-size: 3rem; margin: 1rem 0;" id="score-display">8/10</div>
+            <p id="score-message">Great job!</p>
+            <div id="review-list" style="max-height: 400px; overflow-y: auto; text-align: left; margin: 2rem 0;"></div>
+            <button class="btn btn-primary" onclick="location.reload()">Play Again 🔄</button>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    // --- DATA STORE (Extracted strictly from PDF) ---
+    const db = [
+        // --- OUR PLANET: Body Parts (Pg 7) ---
+        { q: "I see with my...", a: "Eyes", cat: "Our Planet", pg: 7, img: "👀", type: "mcq", opts: ["Eyes", "Ears", "Nose", "Legs"] },
+        { q: "I hear with my...", a: "Ears", cat: "Our Planet", pg: 7, img: "👂", type: "mcq", opts: ["Ears", "Eyes", "Skin", "Hair"] },
+        { q: "I smell with my...", a: "Nose", cat: "Our Planet", pg: 7, img: "👃", type: "mcq", opts: ["Nose", "Tongue", "Hands", "Eyes"] },
+        { q: "I taste with my...", a: "Tongue", cat: "Our Planet", pg: 7, img: "👅", type: "mcq", opts: ["Tongue", "Teeth", "Lips", "Nose"] },
+        { q: "I touch with my...", a: "Fingers/Skin", cat: "Our Planet", pg: 7, img: "👆", type: "mcq", opts: ["Fingers", "Hair", "Eyes", "Ears"] },
+        { q: "I walk with my...", a: "Legs", cat: "Our Planet", pg: 7, img: "🦵", type: "mcq", opts: ["Legs", "Hands", "Back", "Head"] },
+        { q: "I think with my...", a: "Brain", cat: "Our Planet", pg: 7, img: "🧠", type: "mcq", opts: ["Brain", "Heart", "Lungs", "Stomach"] },
+        { q: "I breathe with my...", a: "Lungs/Nose", cat: "Our Planet", pg: 7, img: "🫁", type: "mcq", opts: ["Lungs", "Stomach", "Brain", "Legs"] },
+        
+        // --- ANIMALS (Pg 8-9) ---
+        { q: "Which animal carries luggage?", a: "Donkey", cat: "Our Planet", pg: 8, img: "🐴", type: "mcq", opts: ["Donkey", "Dog", "Cat", "Lion"] },
+        { q: "Which animal guards our house?", a: "Dog", cat: "Our Planet", pg: 8, img: "🐕", type: "mcq", opts: ["Dog", "Cat", "Cow", "Goat"] },
+        { q: "Which animal is used for ploughing land?", a: "Ox", cat: "Our Planet", pg: 8, img: "🐂", type: "mcq", opts: ["Ox", "Dog", "Cat", "Monkey"] },
+        { q: "Which animal carries huge logs?", a: "Elephant", cat: "Our Planet", pg: 8, img: "🐘", type: "mcq", opts: ["Elephant", "Horse", "Donkey", "Deer"] },
+        { q: "Which animal is used for desert travel?", a: "Camel", cat: "Our Planet", pg: 8, img: "🐪", type: "mcq", opts: ["Camel", "Horse", "Elephant", "Tiger"] },
+        { q: "Is the Ostrich the fastest running bird?", a: "True", cat: "Our Planet", pg: 9, img: "🐦", type: "mcq", opts: ["True", "False"] },
+        { q: "Do cats have nine lives?", a: "True (Myth/Saying)", cat: "Our Planet", pg: 9, img: "🐈", type: "mcq", opts: ["True", "False"] },
+        { q: "Is the Cheetah the fastest mammal?", a: "True", cat: "Our Planet", pg: 9, img: "🐆", type: "mcq", opts: ["True", "False"] },
+        
+        // --- VEGETABLES (Pg 10) ---
+        { q: "Unscramble: JLAINR", a: "BRINJAL", cat: "Vegetables & Fruits", pg: 10, img: "🍆", type: "text" },
+        { q: "Unscramble: SMITRUCKD", a: "DRUMSTICK", cat: "Vegetables & Fruits", pg: 10, img: "🌿", type: "text" },
+        { q: "Unscramble: HISDAR", a: "RADISH", cat: "Vegetables & Fruits", pg: 10, img: "🥕", type: "text" },
+        { q: "Unscramble: HOLLKONK", a: "KNOL KHOL", cat: "Vegetables & Fruits", pg: 10, img: "🥬", type: "text" },
+        { q: "Unscramble: CATPOIA", a: "TAPIOCA", cat: "Vegetables & Fruits", pg: 10, img: "🍠", type: "text" },
+        { q: "Unscramble: CUTLET (Hint: Salad leaf)", a: "LETTUCE", cat: "Vegetables & Fruits", pg: 10, img: "🥗", type: "text" },
+        { q: "Unscramble: CHIPSAN", a: "SPINACH", cat: "Vegetables & Fruits", pg: 10, img: "🍃", type: "text" },
+        
+        // --- VERBAL ABILITY (Pg 12-17) ---
+        { q: "Opposite of: Push", a: "Pull", cat: "Verbal Ability", pg: 12, img: "↔", type: "mcq", opts: ["Pull", "Drag", "Hit", "Run"] },
+        { q: "Opposite of: High", a: "Low", cat: "Verbal Ability", pg: 12, img: "↕", type: "mcq", opts: ["Low", "Tall", "Big", "Fat"] },
+        { q: "Opposite of: Laugh", a: "Cry", cat: "Verbal Ability", pg: 12, img: "😂", type: "mcq", opts: ["Cry", "Smile", "Sleep", "Eat"] },
+        { q: "Opposite of: Thick", a: "Thin", cat: "Verbal Ability", pg: 12, img: "🧱", type: "mcq", opts: ["Thin", "Fat", "Wide", "Big"] },
+        { q: "Identify the Odd One Out: Father, Mother, Brother, Sister, Aunt", a: "Aunt", cat: "Verbal Ability", pg: 13, img: "👪", type: "mcq", opts: ["Aunt", "Father", "Mother", "Brother"] },
+        { q: "Identify the Odd One Out: Car, Cycle, Ship, Bus, Auto", a: "Ship", cat: "Verbal Ability", pg: 13, img: "🚢", type: "mcq", opts: ["Ship", "Car", "Cycle", "Bus"] },
+        { q: "What is a palindrome for 'Father'?", a: "DAD", cat: "Verbal Ability", pg: 17, img: "👨", type: "text" },
+        { q: "What is a palindrome for 'Mother'?", a: "MOM", cat: "Verbal Ability", pg: 17, img: "👩", type: "text" },
+        
+        // --- INDIA (Pg 18-24) ---
+        { q: "When is Independence Day celebrated?", a: "15th August", cat: "India", pg: 19, img: "🇮🇳", type: "mcq", opts: ["15th August", "26th January", "2nd October", "14th November"] },
+        { q: "Who was the first Prime Minister of India?", a: "Jawaharlal Nehru", cat: "India", pg: 19, img: "👤", type: "mcq", opts: ["Jawaharlal Nehru", "Gandhi", "Subhas Chandra Bose", "Patel"] },
+        { q: "How many lions are in the National Emblem?", a: "4", cat: "India", pg: 20, img: "🦁", type: "mcq", opts: ["4", "3", "2", "1"] },
+        { q: "What is written at the bottom of the Emblem?", a: "Satyameva Jayate", cat: "India", pg: 20, img: "📜", type: "mcq", opts: ["Satyameva Jayate", "Vande Mataram", "Jai Hind", "Inquilab Zindabad"] },
+        { q: "Which freedom fighter is known as 'Netaji'?", a: "Subhas Chandra Bose", cat: "India", pg: 22, img: "👮", type: "mcq", opts: ["Subhas Chandra Bose", "Gandhi", "Nehru", "Bhagat Singh"] },
+        { q: "Who founded the 'Azad Hind Fauz'?", a: "Subhas Chandra Bose", cat: "India", pg: 22, img: "⚔", type: "mcq", opts: ["Subhas Chandra Bose", "Gandhi", "Nehru", "Patel"] },
+        { q: "Identify this landmark: White marble mausoleum in Agra", a: "Taj Mahal", cat: "India", pg: 24, img: "🕌", type: "mcq", opts: ["Taj Mahal", "Red Fort", "Qutub Minar", "India Gate"] },
+        { q: "Identify this landmark: Also known as the 'Gateway of India'", a: "Gateway of India", cat: "India", pg: 24, img: "⛩", type: "mcq", opts: ["Gateway of India", "India Gate", "Charminar", "Sun Temple"] },
+
+        // --- SPORTS (Pg 25) ---
+        { q: "Which sport does Virat Kohli play?", a: "Cricket", cat: "Sports", pg: 25, img: "🏏", type: "mcq", opts: ["Cricket", "Football", "Hockey", "Tennis"] },
+        { q: "Which sport does P.V. Sindhu play?", a: "Badminton", cat: "Sports", pg: 25, img: "🏸", type: "mcq", opts: ["Badminton", "Tennis", "Chess", "Boxing"] },
+        { q: "Which sport does Vishwanathan Anand play?", a: "Chess", cat: "Sports", pg: 25, img: "♟", type: "mcq", opts: ["Chess", "Carrom", "Cricket", "Ludo"] },
+        { q: "Which sport does Abhinav Bindra play?", a: "Shooting", cat: "Sports", pg: 25, img: "🎯", type: "mcq", opts: ["Shooting", "Archery", "Boxing", "Wrestling"] },
+
+        // --- MIXED BAG (Pg 26-31) ---
+        { q: "Which vehicle runs on rails in the city?", a: "Metro/Monorail", cat: "Mixed Bag", pg: 26, img: "🚇", type: "mcq", opts: ["Metro", "Bus", "Car", "Bicycle"] },
+        { q: "Which is the fastest mode of transport?", a: "Aeroplane", cat: "Mixed Bag", pg: 26, img: "✈", type: "mcq", opts: ["Aeroplane", "Train", "Car", "Ship"] },
+        { q: "What is an old method of communication?", a: "Post Card", cat: "Mixed Bag", pg: 27, img: "✉", type: "mcq", opts: ["Post Card", "Email", "Mobile", "Fax"] },
+        { q: "What colour coat does a Doctor wear?", a: "White", cat: "Mixed Bag", pg: 29, img: "🥼", type: "mcq", opts: ["White", "Black", "Khaki", "Blue"] },
+        { q: "What colour uniform does a Policeman wear?", a: "Khaki", cat: "Mixed Bag", pg: 29, img: "👮", type: "mcq", opts: ["Khaki", "White", "Green", "Red"] },
+        { q: "Symbol meaning: Cigarette with a cross line", a: "No Smoking", cat: "Mixed Bag", pg: 31, img: "🚭", type: "mcq", opts: ["No Smoking", "Smoking Area", "Fire", "Danger"] },
+        { q: "Symbol meaning: Skull and Crossbones", a: "Danger", cat: "Mixed Bag", pg: 31, img: "☠", type: "mcq", opts: ["Danger", "Pirates", "Hospital", "School"] }
+    ];
+
+    // --- FLASHCARD LOGIC ---
+    let currentCardIndex = 0;
+    let filteredDB = [...db];
+    let isFlipped = false;
+
+    function initFlashcards() {
+        renderCard();
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+        
+        if(tab === 'flashcards') {
+            document.getElementById('flashcards-view').classList.remove('hidden');
+            document.getElementById('quiz-view').classList.add('hidden');
+        } else {
+            document.getElementById('flashcards-view').classList.add('hidden');
+            document.getElementById('quiz-view').classList.remove('hidden');
+        }
+    }
+
+    document.getElementById('topic-filter').addEventListener('change', (e) => {
+        const cat = e.target.value;
+        if(cat === 'all') {
+            filteredDB = [...db];
+        } else {
+            filteredDB = db.filter(item => item.cat === cat);
+        }
+        currentCardIndex = 0;
+        isFlipped = false;
+        renderCard();
+    });
+
+    function renderCard() {
+        const card = document.getElementById('card-element');
+        card.classList.remove('flipped');
+        isFlipped = false;
+
+        setTimeout(() => {
+            if(filteredDB.length === 0) return;
+            const item = filteredDB[currentCardIndex];
+            document.getElementById('fc-category').innerText = item.cat;
+            document.getElementById('fc-image').innerText = item.img;
+            document.getElementById('fc-question').innerText = item.q;
+            
+            document.getElementById('fc-result-emoji').innerText = item.img;
+            document.getElementById('fc-answer').innerText = item.a;
+            document.getElementById('fc-page').innerText = "Source: Pg " + item.pg;
+        }, 200);
+    }
+
+    function flipCard() {
+        const card = document.getElementById('card-element');
+        isFlipped = !isFlipped;
+        if(isFlipped) card.classList.add('flipped');
+        else card.classList.remove('flipped');
+    }
+
+    function nextCard() {
+        currentCardIndex = (currentCardIndex + 1) % filteredDB.length;
+        renderCard();
+    }
+
+    function prevCard() {
+        currentCardIndex = (currentCardIndex - 1 + filteredDB.length) % filteredDB.length;
+        renderCard();
+    }
+
+    // --- QUIZ LOGIC ---
+    let quizQuestions = [];
+    let currentQuizIndex = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function startQuiz() {
+        const count = parseInt(document.getElementById('question-count').value);
+        // Shuffle and slice
+        const shuffled = [...db].sort(() => 0.5 - Math.random());
+        quizQuestions = shuffled.slice(0, count);
+        currentQuizIndex = 0;
+        score = 0;
+        userAnswers = [];
+
+        document.getElementById('quiz-setup').classList.add('hidden');
+        document.getElementById('quiz-active').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = quizQuestions[currentQuizIndex];
+        const total = quizQuestions.length;
+        
+        // Update Progress
+        const pct = ((currentQuizIndex) / total) * 100;
+        document.getElementById('progress-fill').style.width = pct + "%";
+
+        document.getElementById('quiz-image').innerText = q.img;
+        document.getElementById('quiz-question').innerText = q.q;
+        document.getElementById('quiz-feedback').classList.add('hidden');
+        document.getElementById('next-q-btn').disabled = true;
+
+        const container = document.getElementById('quiz-options');
+        container.innerHTML = '';
+
+        // Generate Options
+        let options = [];
+        if(q.type === 'mcq') {
+            options = [...q.opts];
+            // Shuffle options
+            options.sort(() => 0.5 - Math.random());
+        } else {
+            // Text type (scramble), we create distractors
+            options = [q.a];
+            // Find 3 random answers from DB that are not the correct one
+            const distractors = db.filter(x => x.a !== q.a).sort(() => 0.5 - Math.random()).slice(0, 3).map(x => x.a);
+            options.push(...distractors);
+            options.sort(() => 0.5 - Math.random());
+        }
+
+        options.forEach(opt => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => selectOption(btn, opt, q.a);
+            container.appendChild(btn);
+        });
+    }
+
+    function selectOption(btnElement, selected, correct) {
+        // Disable all clicks
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+        const isCorrect = selected.toLowerCase() === correct.toLowerCase() || 
+                          (correct.includes('/') && correct.includes(selected));
+
+        const fb = document.getElementById('quiz-feedback');
+        fb.classList.remove('hidden');
+        
+        if(isCorrect) {
+            btnElement.classList.add('correct');
+            fb.innerText = "✨ Correct! Well done.";
+            fb.className = "feedback correct";
+            score++;
+        } else {
+            btnElement.classList.add('incorrect');
+            fb.innerText = `❌ Oops! The correct answer is: ${correct}`;
+            fb.className = "feedback incorrect";
+            
+            // Highlight correct one
+            allBtns.forEach(b => {
+                if(b.innerText === correct) b.classList.add('correct');
+            });
+        }
+
+        userAnswers.push({
+            q: quizQuestions[currentQuizIndex].q,
+            correct: correct,
+            selected: selected,
+            isCorrect: isCorrect,
+            pg: quizQuestions[currentQuizIndex].pg
+        });
+
+        document.getElementById('next-q-btn').disabled = false;
+    }
+
+    function nextQuestion() {
+        currentQuizIndex++;
+        if(currentQuizIndex < quizQuestions.length) {
+            renderQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        document.getElementById('quiz-active').classList.add('hidden');
+        document.getElementById('quiz-results').classList.remove('hidden');
+        
+        const total = quizQuestions.length;
+        document.getElementById('score-display').innerText = `${score}/${total}`;
+        
+        let msg = "";
+        if(score === total) msg = "🏆 Perfect Score! You are a Genius!";
+        else if(score > total * 0.7) msg = "🌟 Great Job! Almost perfect.";
+        else msg = "📚 Keep Practicing! You can do it.";
+        document.getElementById('score-message').innerText = msg;
+
+        // Render Review
+        const list = document.getElementById('review-list');
+        list.innerHTML = "";
+        userAnswers.forEach((item, i) => {
+            if(!item.isCorrect) {
+                const div = document.createElement('div');
+                div.className = 'review-item';
+                div.innerHTML = `
+                    <div class="review-q">${i+1}. ${item.q}</div>
+                    <div style="color: red;">You said: ${item.selected}</div>
+                    <div class="review-a">Correct: ${item.correct}</div>
+                    <div class="review-explain">Reference: PDF Page ${item.pg}</div>
+                `;
+                list.appendChild(div);
+            }
+        });
+        if(userAnswers.every(x => x.isCorrect)) {
+            list.innerHTML = "<div style='text-align:center'>No mistakes to review! Amazing!</div>";
+        }
+    }
+
+    // Initialize
+    initFlashcards();
+
+</script>
 </body>
 </html>
